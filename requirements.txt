@@ -1,0 +1,6 @@
+flask
+flask-cors
+scikit-learn
+PyPDF2
+duckduckgo_search
+sqlite3
