@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from powder import SimpleLocalAI
+from diana import SimpleLocalAI
 import os
 
 app = Flask(__name__)
@@ -8,7 +8,8 @@ CORS(app) # Mengizinkan Astro (frontend) mengakses API ini
 
 from database.db_manager import (
     init_db, save_chat_message, get_chat_history, update_history_duration,
-    get_all_intents, add_new_intent
+    get_all_intents, add_new_intent, clear_chat_history,
+    delete_chat_message, toggle_chat_lock
 )
 
 # Inisialisasi Database
@@ -96,11 +97,18 @@ def upload_intents():
     for row in csv_input:
         if len(row) >= 2:
             trigger = row[0].strip()
-            response = row[1].strip()
-            if trigger and response:
-                # Bungkus pemicu dengan pola regex standar
-                pattern = f"\\b({trigger.lower()})\\b"
-                add_new_intent(pattern, response)
+            # Ambil semua kolom setelah pemicu sebagai variasi respon
+            responses = [r.strip() for r in row[1:] if r.strip()]
+            
+            if trigger and responses:
+                # Jika pemicu sudah mengandung simbol regex (seperti | atau \b), gunakan langsung
+                # Jika pemicu hanya kata biasa, bungkus dengan \b
+                if any(c in trigger for c in ['|', '\\', '(', ')', '.*']):
+                    pattern = trigger.lower()
+                else:
+                    pattern = f"\\b({trigger.lower()})\\b"
+                
+                add_new_intent(pattern, responses)
                 count += 1
                 
     ai.load_knowledge() # Reload AI agar data baru langsung aktif
@@ -183,15 +191,17 @@ def settings():
     if days is not None:
         update_history_duration(days)
         
-    # Update Kepribadian
-    personality = data.get('personality')
-    if personality is not None:
+    # (Kepribadian sekarang dihardcode menjadi Jinx, tidak perlu diupdate)
+
+    # Update Ollama Model
+    ollama_model = data.get('ollama_model')
+    if ollama_model is not None:
         from database.db_manager import update_setting
-        update_setting('personality', personality)
+        update_setting('ollama_model', ollama_model)
         
     return jsonify({"success": True, "message": "Pengaturan berhasil diperbarui!"})
 
-def simpan_ke_respon_powder(trigger, response):
+def simpan_ke_respon_diana(trigger, response):
     """Fungsi pembantu untuk menyimpan latihan baru."""
     add_new_intent(trigger, response)
 
@@ -205,20 +215,77 @@ def train():
         return jsonify({"success": False, "message": "Pemicu dan respon tidak boleh kosong."}), 400
     
     try:
-        simpan_ke_respon_powder(trigger, response)
+        simpan_ke_respon_diana(trigger, response)
         ai.load_knowledge() # Reload agar ilmu baru langsung aktif
-        return jsonify({"success": True, "message": f"Berhasil melatih Powder untuk pemicu: '{trigger}'"})
+        return jsonify({"success": True, "message": f"Berhasil melatih Diana untuk pemicu: '{trigger}'"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+
+@app.route('/history', methods=['GET'])
+def history():
+    """Mengambil riwayat percakapan."""
+    chat_history = get_chat_history()
+    return jsonify({"history": chat_history})
+
+@app.route('/history/clear', methods=['POST'])
+def clear_history():
+    """Menghapus seluruh riwayat percakapan (kecuali yang dikunci)."""
+    clear_chat_history()
+    return jsonify({"success": True, "message": "Riwayat chat (yang tidak dikunci) telah dihapus."})
+
+@app.route('/history/delete/<int:msg_id>', methods=['POST'])
+def delete_history_item(msg_id):
+    """Menghapus satu item riwayat chat."""
+    delete_chat_message(msg_id)
+    return jsonify({"success": True})
+
+@app.route('/history/lock/<int:msg_id>', methods=['POST'])
+def lock_history_item(msg_id):
+    """Mengunci/membuka kunci item riwayat chat."""
+    toggle_chat_lock(msg_id)
+    return jsonify({"success": True})
+
+# --- AUTO LEARNING ENDPOINTS ---
+from services.auto_learner import start_learning, stop_learning, get_status
+
+@app.route('/auto_learning/start', methods=['POST'])
+def auto_learning_start():
+    data = request.json
+    minutes = int(data.get('minutes', 15))
+    topic = data.get('topic', "").strip()
+    success, message = start_learning(minutes, topic)
+    
+    if success:
+        return jsonify({"success": True, "message": message})
+    else:
+        return jsonify({"success": False, "message": message}), 400
+
+@app.route('/auto_learning/stop', methods=['POST'])
+def auto_learning_stop():
+    success, message = stop_learning()
+    if success:
+        return jsonify({"success": True, "message": message})
+    else:
+        return jsonify({"success": False, "message": message}), 400
+
 @app.route('/status', methods=['GET'])
-def status():
-    return jsonify({"status": "active", "bot_name": ai.name})
+def status_check():
+    """Endpoint untuk mengecek apakah server aktif."""
+    return jsonify({
+        "status": "online", 
+        "bot_name": ai.name,
+        "message": "Server Diana AI Aktif"
+    }), 200
+
+@app.route('/auto_learning/status', methods=['GET'])
+def auto_learning_status():
+    return jsonify(get_status())
 
 if __name__ == '__main__':
     print("==========================================")
-    print("      BACKEND POWDER AI AKTIF             ")
+    print("       BACKEND DIANA AI AKTIF             ")
     print("  Alamat: http://127.0.0.1:5000           ")
     print("==========================================")
-    # Menjalankan server di port 5000
-    app.run(host='127.0.0.1', debug=True, port=5000)
+    # Menjalankan server di port 5000 (0.0.0.0 agar bisa diakses dari IP lokal mana pun)
+    app.run(host='0.0.0.0', debug=True, port=5000)

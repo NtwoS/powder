@@ -8,7 +8,7 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Powder AI - Interface</title>
+		<title>Diana AI - Interface</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -21,27 +21,36 @@
 				<div class="sidebar-header">
 					<div class="logo">
 						<span class="dot"></span>
-						<h1>Powder AI</h1>
+						<h1>Diana AI</h1>
 					</div>
 				</div>
 
 				<nav class="sidebar-nav">
 					<button class="nav-item active" id="btn-new-chat">
-						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
+						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg></div>
 						<span>New Chat</span>
 					</button>
 					<button class="nav-item" id="btn-skills">
-						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg></div>
+						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></div>
 						<span>Skill & Tugas</span>
 					</button>
 					<button class="nav-item" id="btn-admin-panel">
-						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2-2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
-						<span>Otak Powder</span>
+						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+						<span>Otak Diana</span>
 					</button>
 					<button class="nav-item" id="btn-settings">
-						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></div>
+						<div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2-2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
 						<span>Settings</span>
 					</button>
+
+					<div style="margin-top: 20px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 1px;">History</span>
+						<button id="btn-clear-history" style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 0.7rem; padding: 4px; opacity: 0.6; transition: all 0.2s;">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+						</button>
+					</div>
+					<div id="sidebar-history" style="padding: 0 10px; display: flex; flex-direction: column; gap: 8px;">
+					</div>
 				</nav>
 
 				<div class="sidebar-footer">
@@ -57,22 +66,35 @@
 
 			<!-- Main Chat -->
 			<main class="chat-area" id="view-chat">
-				<div id="chat-container">
-					<div class="message system">
-						<p>Selamat datang! Saya Powder, asisten virtual Anda.</p>
+				<div class="empty-state" id="empty-state">
+					<div class="logo-icon" style="background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+						<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
 					</div>
+				</div>
+				<div id="chat-container">
+					<!-- Messages will appear here -->
 				</div>
 
 				<footer class="chat-footer">
 					<form id="chat-form">
 						<input type="file" id="file-analyzer" accept=".txt,.pdf" style="display: none;" />
-						<button type="button" class="btn-icon" id="btn-attach" title="Analisis File (.txt, .pdf)">
-							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+						<button type="button" class="btn-icon" id="btn-attach" title="Attach file">
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 						</button>
-						<input type="text" id="user-input" placeholder="Tanya sesuatu atau unggah file untuk dianalisis..." autocomplete="off" />
-						<button type="submit">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-						</button>
+						
+						<input type="text" id="user-input" placeholder="Send a message" autocomplete="off" />
+						
+						<div class="input-actions" style="display: flex; align-items: center; gap: 8px;">
+							<button type="button" class="btn-icon" title="Web search">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+							</button>
+							<div class="model-selector" style="background: #2a2a2a; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; color: #ccc; border: 1px solid #333; cursor: pointer;">
+								qwen2:0.5b <svg style="display: inline; vertical-align: middle;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+							</div>
+							<button type="submit" id="btn-send">
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+							</button>
+						</div>
 					</form>
 				</footer>
 			</main>
@@ -81,7 +103,7 @@
 			<main class="chat-area" id="view-admin" style="display: none;">
 				<div class="admin-header">
 					<div class="header-main">
-						<h2>Manajemen Otak Powder</h2>
+						<h2>Manajemen Otak Diana</h2>
 						<p>Lihat dan kelola semua pola pengetahuan yang sudah dipelajari.</p>
 					</div>
 					<div class="header-actions">
@@ -115,8 +137,8 @@
 			<!-- Skills & Tugas Panel -->
 			<main class="chat-area" id="view-skills" style="display: none;">
 				<div class="admin-header">
-					<h2>Skill & Tugas Powder</h2>
-					<p>Pilih keahlian atau tugas yang ingin Powder kerjakan sekarang.</p>
+					<h2>Skill & Tugas Diana</h2>
+					<p>Pilih keahlian atau tugas yang ingin Diana kerjakan sekarang.</p>
 				</div>
 				
 				<div class="settings-container">
@@ -125,7 +147,7 @@
 						<div class="job-card clickable-card" id="card-skill-latihan">
 							<div class="p-icon">🎓</div>
 							<h4>Mode Latihan</h4>
-							<p>Ajarkan Powder pola respon baru secara langsung melalui chat.</p>
+							<p>Ajarkan Diana pola respon baru secara langsung melalui chat.</p>
 							<div class="status-badge">Aktifkan</div>
 						</div>
 
@@ -133,7 +155,7 @@
 						<div class="job-card clickable-card" id="card-skill-finance">
 							<div class="p-icon">💰</div>
 							<h4>Manajemen Keuangan</h4>
-							<p>Catat pengeluaran, pemasukan, dan biarkan Powder menghitung saldo Anda.</p>
+							<p>Catat pengeluaran, pemasukan, dan biarkan Diana menghitung saldo Anda.</p>
 							<div class="status-badge" style="background: #10b981;">Buka Kalkulator</div>
 						</div>
 
@@ -150,62 +172,104 @@
 			<!-- Settings Panel -->
 			<main class="chat-area" id="view-settings" style="display: none;">
 				<div class="admin-header">
-					<h2>Pengaturan Powder</h2>
+					<h2>Pengaturan Diana</h2>
 					<p>Sesuaikan memori dan kepribadian asisten virtual Anda.</p>
 				</div>
 				
 				<div class="settings-container">
-					<!-- Card Utama 1: Riwayat -->
-					<div class="settings-card" id="card-main-history">
-						<div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-						<div class="card-content">
-							<h3>Pengaturan Riwayat</h3>
-							<p>Kelola berapa lama Powder menyimpan ingatan percakapan Anda.</p>
-							<div class="input-group">
-								<input type="number" id="input-history-days" value="7" min="1" max="365" />
-								<span>Hari</span>
-								<button class="btn-save" id="btn-save-history">Simpan</button>
+				<div class="settings-container">
+					<div class="personality-grid" id="main-settings-grid">
+						<!-- Card Riwayat -->
+						<div class="job-card" id="card-main-history">
+							<div class="p-icon">⏳</div>
+							<h4>Riwayat Chat</h4>
+							<p>Lama Diana menyimpan percakapan.</p>
+							<div class="input-group" style="margin-top: 15px; display: flex; gap: 8px; justify-content: center;">
+								<input type="number" id="input-history-days" value="7" min="1" max="365" style="width: 60px; padding: 4px; border-radius: 4px; border: 1px solid var(--border);" />
+								<span style="align-self: center; font-size: 0.9rem; color: var(--text-dim);">Hari</span>
+								<button class="btn-save" id="btn-save-history" style="padding: 4px 12px; border-radius: 4px;">Simpan</button>
 							</div>
 						</div>
+
+						<div class="job-card" id="card-identity-diana">
+							<div class="p-icon">🌕</div>
+							<h4>Identitas</h4>
+							<p>Diana (Android Pragmata)</p>
+							<div class="status-badge" style="background: #818cf8;">Future Active</div>
+						</div>
+
+						<!-- Card Otak Cadangan -->
+						<div class="job-card clickable-card" id="btn-show-ollama">
+							<div class="p-icon">🧠</div>
+							<h4>Otak Cadangan</h4>
+							<p>Pilih model Ollama AI untuk fallback.</p>
+							<div class="status-badge" id="current-ollama-badge" style="background: #8b5cf6;">qwen2:0.5b</div>
+						</div>
+
+						<!-- Card Auto Learning -->
+						<div class="job-card clickable-card" id="btn-show-autolearn">
+							<div class="p-icon">🤖</div>
+							<h4>Auto Learning</h4>
+							<p>Biarkan Diana bertapa dan belajar sendiri.</p>
+							<div class="status-badge" id="badge-autolearn" style="background: #64748b;">Mati</div>
+						</div>
 					</div>
 
-					<!-- Card Utama 2: Kepribadian (Trigger) -->
-					<div class="settings-card clickable-card" id="btn-show-personality">
-						<div class="card-icon">🎭</div>
-						<div class="card-content">
-							<h3>Kepribadian Powder</h3>
-							<p>Ubah gaya bicara Powder menjadi lebih Ceria, Santai, atau Profesional.</p>
-							<span class="status-badge" id="current-personality-badge">Ceria</span>
-						</div>
-						<div class="card-arrow">
-							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-						</div>
-					</div>
-
-					<!-- Personality Sub-Menu (Hidden by default) -->
-					<div class="personality-section" id="personality-sub-menu" style="display: none;">
+					<!-- Ollama Sub-Menu (Hidden by default) -->
+					<div class="personality-section" id="ollama-sub-menu" style="display: none;">
 						<div class="section-header">
-							<button class="btn-back" id="btn-back-settings">
+							<button class="btn-back" id="btn-back-ollama">
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
 								Kembali
 							</button>
-							<h3>Pilih Gaya Bicara</h3>
+							<h3>Pilih Model Ollama</h3>
 						</div>
 						<div class="personality-grid">
-							<div class="personality-card" data-personality="ceria">
-								<div class="p-icon">✨</div>
-								<h4>Ceria</h4>
-								<p>Ramah, penuh energi, dan suka menggunakan emoji.</p>
+							<div class="personality-card active" data-ollama="qwen2:0.5b">
+								<div class="p-icon">⚡</div>
+								<h4>Qwen2 (0.5b)</h4>
+								<p>Sangat ringan dan cepat. Cocok untuk RAM 8GB.</p>
 							</div>
-							<div class="personality-card" data-personality="profesional">
-								<div class="p-icon">💼</div>
-								<h4>Profesional</h4>
-								<p>Serius, formal, dan memberikan jawaban yang padat.</p>
+							<div class="personality-card" data-ollama="llama3">
+								<div class="p-icon">🦙</div>
+								<h4>Llama 3</h4>
+								<p>Sangat cerdas tapi berat. Butuh RAM besar.</p>
 							</div>
-							<div class="personality-card" data-personality="santai">
-								<div class="p-icon">😎</div>
-								<h4>Santai</h4>
-								<p>Gaya bicara asik, santai, dan seperti teman akrab.</p>
+							<div class="personality-card" data-ollama="mistral">
+								<div class="p-icon">🌪️</div>
+								<h4>Mistral</h4>
+								<p>Seimbang performa dan kecepatannya.</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Auto Learning Sub-Menu (Hidden by default) -->
+					<div class="personality-section" id="autolearn-sub-menu" style="display: none;">
+						<div class="section-header">
+							<button class="btn-back" id="btn-back-autolearn">
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+								Kembali
+							</button>
+							<h3>Latihan Mandiri (Auto Learning)</h3>
+						</div>
+						<div class="admin-panel" style="padding: 20px;">
+							<p style="color: var(--text-dim); margin-bottom: 20px;">Diana akan terus-menerus bertanya kepada Ollama untuk mencari pengetahuan baru selama durasi yang ditentukan.</p>
+							<div class="input-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+								<input type="text" id="input-autolearn-topic" placeholder="Topik Spesifik (Opsional, cth: Fisika Kuantum)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box;">
+								<div style="display: flex; gap: 10px;">
+									<input type="number" id="input-autolearn-mins" value="15" min="1" max="120" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); flex: 1;">
+									<span style="align-self: center; font-weight: bold;">Menit</span>
+								</div>
+							</div>
+							<div style="display: flex; gap: 10px;">
+								<button class="btn-save" id="btn-start-autolearn" style="flex: 1; padding: 12px; font-weight: bold; background: #10b981; color: white;">Mulai Latihan 🚀</button>
+								<button class="btn-save" id="btn-stop-autolearn" style="flex: 1; padding: 12px; font-weight: bold; background: #ef4444; color: white; display: none;">Hentikan 🛑</button>
+							</div>
+							<div id="autolearn-status-text" style="margin-top: 15px; text-align: center; font-weight: bold; color: #10b981; display: none;">Sedang Berlatih... Sisa Waktu: --:--</div>
+							<div id="autolearn-report" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; display: none;">
+								<h4 style="margin-bottom: 10px; color: var(--text);">Laporan Sesi Ini:</h4>
+								<ul id="autolearn-report-list" style="color: var(--text-dim); font-size: 0.9rem; padding-left: 20px; max-height: 150px; overflow-y: auto;">
+								</ul>
 							</div>
 						</div>
 					</div>
@@ -227,7 +291,7 @@
 			const btnNewChat = document.getElementById('btn-new-chat');
 			const btnAdminPanel = document.getElementById('btn-admin-panel');
 			const btnSettings = document.getElementById('btn-settings');
-			
+
 			// Views
 			const viewChat = document.getElementById('view-chat');
 			const viewSkills = document.getElementById('view-skills');
@@ -270,7 +334,16 @@
 			}
 
 			// Sidebar Navigation Listeners
-			btnNewChat.addEventListener('click', () => showView('chat'));
+			btnNewChat.addEventListener('click', () => {
+				currentMode = 'chat';
+				trainingState = 'idle';
+				container.innerHTML = `
+					<div class="message system">
+						<p>Percakapan baru dimulai. Ada yang bisa saya bantu?</p>
+					</div>
+				`;
+				showView('chat');
+			});
 			btnSkills.addEventListener('click', () => showView('skills'));
 			btnAdminPanel.addEventListener('click', () => showView('admin'));
 			btnSettings.addEventListener('click', () => showView('settings'));
@@ -296,46 +369,127 @@
 			}
 
 			// NAVIGATION CARDS LOGIC
-			const btnShowPersonality = document.getElementById('btn-show-personality');
-			const btnBackSettings = document.getElementById('btn-back-settings');
-			const personalitySubMenu = document.getElementById('personality-sub-menu');
-			const cardMainHistory = document.getElementById('card-main-history');
-
-			btnShowPersonality.addEventListener('click', () => {
-				// Hide main cards, show sub-menu
-				cardMainHistory.style.display = 'none';
-				btnShowPersonality.style.display = 'none';
-				personalitySubMenu.style.display = 'block';
+			const mainSettingsGrid = document.getElementById('main-settings-grid');
+			
+			const btnShowOllama = document.getElementById('btn-show-ollama');
+			const btnBackOllama = document.getElementById('btn-back-ollama');
+			const ollamaSubMenu = document.getElementById('ollama-sub-menu');			btnShowOllama.addEventListener('click', () => {
+				mainSettingsGrid.style.display = 'none';
+				ollamaSubMenu.style.display = 'block';
 			});
 
-			btnBackSettings.addEventListener('click', () => {
-				// Show main cards, hide sub-menu
-				cardMainHistory.style.display = 'flex';
-				btnShowPersonality.style.display = 'flex';
-				personalitySubMenu.style.display = 'none';
+			btnBackOllama.addEventListener('click', () => {
+				mainSettingsGrid.style.display = 'grid';
+				ollamaSubMenu.style.display = 'none';
 			});
 
-			// Personality Logic (Update Badge)
-			const badge = document.getElementById('current-personality-badge');
-			document.querySelectorAll('.personality-card').forEach(card => {
+			const btnShowAutolearn = document.getElementById('btn-show-autolearn');
+			const btnBackAutolearn = document.getElementById('btn-back-autolearn');
+			const autolearnSubMenu = document.getElementById('autolearn-sub-menu');
+
+			btnShowAutolearn.addEventListener('click', () => {
+				mainSettingsGrid.style.display = 'none';
+				autolearnSubMenu.style.display = 'block';
+			});
+
+			btnBackAutolearn.addEventListener('click', () => {
+				mainSettingsGrid.style.display = 'grid';
+				autolearnSubMenu.style.display = 'none';
+			});
+
+			// Ollama Logic (Update Badge)
+			const ollamaBadge = document.getElementById('current-ollama-badge');
+			document.querySelectorAll('#ollama-sub-menu .personality-card').forEach(card => {
 				card.addEventListener('click', async () => {
-					const p = card.getAttribute('data-personality');
+					const m = card.getAttribute('data-ollama');
 					try {
 						const res = await fetch('http://127.0.0.1:5000/settings', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ personality: p })
+							body: JSON.stringify({ ollama_model: m })
 						});
 						if (res.ok) {
-							document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
+							document.querySelectorAll('#ollama-sub-menu .personality-card').forEach(c => c.classList.remove('active'));
 							card.classList.add('active');
-							badge.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+							ollamaBadge.textContent = m;
 						}
 					} catch (err) {
-						alert("Gagal mengubah kepribadian.");
+						alert("Gagal mengubah model Ollama.");
 					}
 				});
 			});
+
+			// Auto Learning Logic
+			const btnStartLearn = document.getElementById('btn-start-autolearn');
+			const btnStopLearn = document.getElementById('btn-stop-autolearn');
+			const statusText = document.getElementById('autolearn-status-text');
+			const badgeAutolearn = document.getElementById('badge-autolearn');
+			const inputLearnMins = document.getElementById('input-autolearn-mins');
+			const inputLearnTopic = document.getElementById('input-autolearn-topic');
+			let autolearnInterval = null;
+
+			async function updateAutolearnStatus() {
+				try {
+					const res = await fetch('http://127.0.0.1:5000/auto_learning/status');
+					const data = await res.json();
+					
+					const reportDiv = document.getElementById('autolearn-report');
+					const reportList = document.getElementById('autolearn-report-list');
+					
+					if (data.learned_items && data.learned_items.length > 0) {
+						reportDiv.style.display = 'block';
+						reportList.innerHTML = data.learned_items.map(item => `<li style="margin-bottom: 5px;"><strong>${item.tanya}</strong></li>`).join('');
+					} else {
+						reportDiv.style.display = 'none';
+					}
+
+					if (data.status === 'active') {
+						btnStartLearn.style.display = 'none';
+						btnStopLearn.style.display = 'block';
+						statusText.style.display = 'block';
+						statusText.textContent = `Sedang Berlatih... Sisa Waktu: ${data.time_remaining}`;
+						badgeAutolearn.textContent = 'Aktif ⚡';
+						badgeAutolearn.style.background = '#10b981';
+					} else {
+						btnStartLearn.style.display = 'block';
+						btnStopLearn.style.display = 'none';
+						statusText.style.display = 'none';
+						badgeAutolearn.textContent = 'Mati';
+						badgeAutolearn.style.background = '#64748b';
+						if (autolearnInterval) clearInterval(autolearnInterval);
+					}
+				} catch (e) { console.error(e); }
+			}
+
+			btnStartLearn.addEventListener('click', async () => {
+				const mins = inputLearnMins.value;
+				const topic = inputLearnTopic.value;
+				try {
+					const res = await fetch('http://127.0.0.1:5000/auto_learning/start', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ minutes: parseInt(mins), topic: topic })
+					});
+					const data = await res.json();
+					if (data.success) {
+						updateAutolearnStatus();
+						autolearnInterval = setInterval(updateAutolearnStatus, 1000);
+					} else {
+						alert(data.message);
+					}
+				} catch (e) { alert("Gagal memulai latihan."); }
+			});
+
+			btnStopLearn.addEventListener('click', async () => {
+				try {
+					const res = await fetch('http://127.0.0.1:5000/auto_learning/stop', { method: 'POST' });
+					await res.json();
+					updateAutolearnStatus();
+				} catch (e) { alert("Gagal menghentikan latihan."); }
+			});
+			
+			// Initial status check
+			updateAutolearnStatus();
 
 			// Save History Days
 			document.getElementById('btn-save-history').addEventListener('click', async () => {
@@ -504,19 +658,113 @@
 				try {
 					const res = await fetch('http://127.0.0.1:5000/history');
 					const data = await res.json();
+					
+					const sidebarHistory = document.getElementById('sidebar-history');
+					sidebarHistory.innerHTML = ''; // Clear hardcoded history
+
 					if (data.history && data.history.length > 0) {
-						// Bersihkan container dulu tapi sisihkan pesan selamat datang
+						// Ambil 10 pesan User terakhir untuk Sidebar
+						const userMessages = data.history.filter(h => h.sender === 'user').slice(-10).reverse();
+						userMessages.forEach(h => {
+							const itemContainer = document.createElement('div');
+							itemContainer.style.display = 'flex';
+							itemContainer.style.alignItems = 'center';
+							itemContainer.style.justifyContent = 'space-between';
+							itemContainer.style.padding = '4px 8px';
+							itemContainer.style.borderRadius = '6px';
+							itemContainer.style.transition = 'background 0.2s';
+							itemContainer.className = 'history-item-container';
+
+							const itemText = document.createElement('div');
+							itemText.style.color = '#707070';
+							itemText.style.fontSize = '0.85rem';
+							itemText.style.cursor = 'pointer';
+							itemText.style.flex = '1';
+							itemText.textContent = h.message.length > 18 ? h.message.substring(0, 18) + '...' : h.message;
+							
+							const actions = document.createElement('div');
+							actions.style.display = 'flex';
+							actions.style.gap = '6px';
+							actions.style.opacity = '0.4';
+
+							// Button Lock
+							const btnLock = document.createElement('button');
+							btnLock.style.background = 'transparent';
+							btnLock.style.border = 'none';
+							btnLock.style.cursor = 'pointer';
+							btnLock.style.color = h.is_locked ? 'var(--primary)' : '#555';
+							btnLock.innerHTML = h.is_locked 
+								? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
+								: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>';
+							
+							btnLock.addEventListener('click', async (e) => {
+								e.stopPropagation();
+								await fetch(`http://127.0.0.1:5000/history/lock/${h.id}`, { method: 'POST' });
+								loadHistory();
+							});
+
+							// Button Delete Individual
+							const btnDel = document.createElement('button');
+							btnDel.style.background = 'transparent';
+							btnDel.style.border = 'none';
+							btnDel.style.cursor = 'pointer';
+							btnDel.style.color = '#555';
+							btnDel.style.display = h.is_locked ? 'none' : 'block';
+							btnDel.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+							
+							btnDel.addEventListener('click', async (e) => {
+								e.stopPropagation();
+								if (confirm('Hapus item ini?')) {
+									await fetch(`http://127.0.0.1:5000/history/delete/${h.id}`, { method: 'POST' });
+									loadHistory();
+								}
+							});
+
+							itemText.addEventListener('click', () => {
+								container.innerHTML = '';
+								data.history.forEach(chat => addMessage(chat.message, chat.sender));
+							});
+							
+							itemContainer.addEventListener('mouseenter', () => {
+								itemContainer.style.background = 'rgba(255,255,255,0.05)';
+								actions.style.opacity = '1';
+							});
+							itemContainer.addEventListener('mouseleave', () => {
+								itemContainer.style.background = 'transparent';
+								actions.style.opacity = '0.4';
+							});
+
+							actions.appendChild(btnLock);
+							actions.appendChild(btnDel);
+							itemContainer.appendChild(itemText);
+							itemContainer.appendChild(actions);
+							sidebarHistory.appendChild(itemContainer);
+						});
+
+						// Tampilkan history di main chat saat startup
 						container.innerHTML = '';
 						data.history.forEach(chat => {
 							addMessage(chat.message, chat.sender);
 						});
-						addMessage("--- Riwayat Chat Dimuat ---", "system");
 					}
 				} catch (err) {
 					console.error("Gagal memuat history:", err);
 				}
 			}
 
+			const btnClearHistory = document.getElementById('btn-clear-history');
+			btnClearHistory.addEventListener('click', async () => {
+				if (confirm('Hapus seluruh riwayat percakapan?')) {
+					try {
+						await fetch('http://127.0.0.1:5000/history/clear', { method: 'POST' });
+						container.innerHTML = '';
+						document.getElementById('empty-state').style.display = 'flex';
+						loadHistory();
+					} catch (err) {
+						alert('Gagal menghapus history.');
+					}
+				}
+			});
 
 			checkStatus();
 			loadHistory(); // Panggil history saat startup
@@ -534,10 +782,10 @@
 
 				addMessage(`Sedang menganalisis file: ${file.name}...`, 'system');
 
-				const formData = new FormData();
-				formData.append('file', file);
-
 				try {
+					const formData = new FormData();
+					formData.append('file', file);
+
 					const res = await fetch('http://127.0.0.1:5000/analyze', {
 						method: 'POST',
 						body: formData
@@ -559,6 +807,7 @@
 			});
 
 			function addMessage(text, sender) {
+				document.getElementById('empty-state').style.display = 'none';
 				const div = document.createElement('div');
 				div.className = `message ${sender}`;
 				div.innerHTML = `<p>${text}</p>`;

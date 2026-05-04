@@ -1,26 +1,26 @@
-# 🛠️ Panduan Menjalankan Powder AI (Arsitektur Baru)
+# 🛠️ Panduan Menjalankan Diana AI (Arsitektur Baru)
 
-Selamat! Powder AI sekarang menggunakan struktur folder profesional yang lebih rapi dan kencang.
+Selamat! Diana AI sekarang menggunakan struktur folder profesional yang lebih rapi dan kencang.
 
 ## 🚀 Cara Menjalankan
 Cukup jalankan satu file utama di folder root:
 ```bash
-python main.py
+run_diana.bat
 ```
 
 ## 📂 Struktur Proyek
-- `main.py`: Titik masuk utama aplikasi.
-- `core/`: Berisi logika utama (AI Engine, Browser, Analyzer, Actions).
-- `api/`: Berisi server Flask dan rute komunikasi.
-- `database/`: Berisi manajemen database SQLite.
-- `utils/`: Berisi fungsi pembantu (Text processing, Trainer).
-- `frontend/`: Folder antarmuka Astro.
+- `run_diana.bat`: Launcher utama untuk menyalakan Backend dan Frontend sekaligus.
+- `backend/`: Berisi logika utama (Diana Engine, API, Database, Services).
+- `frontend/`: Folder antarmuka modern berbasis Astro.
+- `database/`: Berisi manajemen database SQLite (diana.db).
+- `blueprints/`: Panduan kepribadian dan spesifikasi data Diana.
 
 ## 📦 Requirements
 Pastikan Anda sudah menginstal library terbaru:
 ```bash
-pip install -r docs/requirements.txt
+pip install -r requirements.txt
+cd frontend && npm install
 ```
 
 ---
-**Sekarang semuanya sudah tertata rapi! Selamat menikmati Powder AI yang lebih profesional.**
+**Sekarang semuanya sudah tertata rapi! Selamat menikmati Diana AI yang lebih cerdas dan elegan.**

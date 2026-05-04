@@ -1,52 +1,54 @@
-# Powder AI - Project Context & Documentation
+# Diana AI - Project Context & Documentation
 
 ## Deskripsi Proyek
-Powder AI adalah asisten virtual (AI) sederhana berbasis lokal yang ditulis menggunakan bahasa pemrograman Python. Proyek ini berevolusi dari sebuah *chatbot* murni berbasis aturan (Rule-Based) menjadi sistem AI Hibrida (Campuran) yang menggabungkan kecepatan Rule-Based dengan kecerdasan Large Language Model (LLM) melalui integrasi Ollama.
+Diana AI (sebelumnya Powder AI) adalah asisten virtual (AI) hibrida berbasis lokal yang menggabungkan kecepatan pemrosesan berbasis aturan (Regex) dengan kecerdasan Large Language Model (LLM) melalui integrasi Ollama. Diana dirancang dengan persona gadis android futuristik dari masa depan (terinspirasi dari Pragmata) yang tenang, cerdas, dan suportif.
 
 ## Arsitektur & Fitur Utama
 
-1. **Rule-Based System (`powder.py`)**
-   Sistem utama memproses input pengguna dan mencocokkannya dengan pola Regex. Jika ada kecocokan, AI akan mengembalikan jawaban secara instan (atau memanggil fungsi aksi).
+1. **Sistem Hibrida (`diana.py`)**
+   Sistem memproses input pengguna melalui beberapa lapisan:
+   - **Regex Precision**: Pencocokan pola yang sangat akurat.
+   - **Semantic Matching**: Menggunakan TF-IDF & Cosine Similarity untuk memahami maksud meskipun kata-katanya berbeda.
+   - **Ollama Fallback**: Jika data lokal tidak ditemukan, Diana bertanya kepada "otak cadangan" (Ollama Qwen2).
 
-2. **Deteksi & Koreksi Typo**
-   Sistem memisahkan kalimat pengguna menjadi kata-kata, lalu menggunakan library bawaan Python `difflib` (`get_close_matches`) untuk mencocokkan input dengan daftar kosa kata (vocabulary) dengan toleransi kemiripan 70%. Hal ini membuat AI kebal terhadap kesalahan ketik (typo).
+2. **Pembelajaran Interaktif (Interactive Learning)**
+   Diana memiliki kemampuan belajar secara langsung:
+   - **Koreksi**: Pengguna bisa mengoreksi jawaban Diana secara instan.
+   - **Inquiry**: Jika tidak tahu, Diana bertanya kepada pengguna dan menyinkronkan data baru ke memori permanennya.
 
-3. **Pemisahan Data (`respon/respon_powder.py`)**
-   Semua data *knowledge* (pengetahuan), daftar respons (Regex), dan kosa kata dipisah ke dalam folder `respon`. File ini menyediakan fungsi `get_responses` dan `get_vocabulary`.
+3. **Deteksi & Koreksi Typo**
+   Menggunakan `difflib` untuk memastikan input pengguna tetap dipahami meskipun terjadi kesalahan pengetikan ringan (toleransi 70%).
 
-4. **Aksi Sistem (System Actions)**
-   Powder memiliki kemampuan mengeksekusi aksi di luar chat, seperti:
-   - `get_time()`: Menjawab waktu terkini menggunakan modul `datetime`.
-   - `open_calculator()`: Membuka aplikasi kalkulator bawaan Windows menggunakan `subprocess.Popen('calc')`.
+4. **Database SQLite (`database/diana.db`)**
+   Semua pengetahuan, riwayat percakapan, dan pengaturan disimpan dalam database SQLite profesional, menggantikan sistem file JSON/Python statis sebelumnya.
 
-5. **Mode Latihan Dinamis (`powderLatihan/latihan.py`)**
-   Jika pengguna mengetik **"waktunya latihan powder"**, program masuk ke mode *Training*. AI akan meminta "Pemicu" dan "Respon". Skrip akan membuka file `respon_powder.py` dan memodifikasi *source code*-nya secara otomatis untuk menyisipkan regex dan respons baru, lalu me-reload modul (`importlib.reload`) sehingga otak AI terbarui seketika tanpa harus di-restart.
+5. **Antarmuka Modern (Astro Frontend)**
+   Dashboard berbasis web yang elegan dengan fitur:
+   - Chatting real-time.
+   - Manajemen Otak (Intents Management).
+   - Skill & Tugas (Latihan Mandiri & Keuangan).
+   - Pengaturan Model Ollama & Auto-Learning.
 
-6. **Fallback ke LLM Ollama (Qwen2 0.5b)**
-   Jika *Rule-Based System* tidak menemukan jawaban atas pertanyaan pengguna, `powder.py` tidak menyerah. Sistem akan membuat HTTP Request lokal (`urllib.request`) ke API Ollama di `http://localhost:11434/api/generate` untuk meminta jawaban dari model `qwen2:0.5b`. Jika sukses, jawaban Ollama akan diteruskan ke pengguna. Jika Ollama mati atau belum diinstal, program kembali menggunakan default responses.
+6. **Web Search Integration**
+   Diana dapat mencari informasi terkini di internet menggunakan DuckDuckGo Search API.
 
-7. **Auto-Installer (`install_ollama.bat`)**
-   Mengingat spesifikasi laptop yang terbatas (RAM 8GB), proyek ini menyertakan skrip `.bat` otomatis yang mengunduh `OllamaSetup.exe`, mengonfigurasi *Environment Variable* `OLLAMA_MODELS` ke folder lokal `modelAI` (di Drive non-C), menginstal Ollama secara *silent*, menyalakan *service*, dan otomatis mengunduh model `qwen2:0.5b` (model super ringan ~350MB).
-
-## Struktur File
+## Struktur Proyek
 ```text
-powderAI/
-├── powder.py                  (File utama/Loop utama program)
-├── install_ollama.bat         (Skrip instalasi otomatis Ollama)
-├── respon/
-│   └── respon_powder.py       (Penyimpanan pola regex, jawaban, dan aksi)
-├── powderLatihan/
-│   └── latihan.py             (Mesin modifikasi kode otomatis untuk mode latihan)
-├── modelAI/                   (Folder penyimpanan model LLM Ollama - dibuat otomatis)
-└── skils/
-    └── project_context.md     (File ini - Catatan perkembangan dan dokumentasi AI)
+powderAI/ (Root Folder)
+├── diana.py                    (Logika inti AI)
+├── run_diana.bat               (Launcher utama)
+├── backend/
+│   ├── app.py                  (Server API Flask)
+│   ├── database/               (Manajemen SQLite)
+│   ├── services/               (Ollama & Auto-Learning service)
+│   └── respon/                 (Data respon dasar & profil)
+├── frontend/                   (Antarmuka web modern)
+├── blueprints/                 (Panduan persona & spesifikasi data)
+└── docs/                       (Dokumentasi & Setup Guide)
 ```
 
 ## Cara Menjalankan
-Buka terminal/CMD di dalam direktori `powderAI` dan ketik:
-```bash
-python powder.py
-```
+Cukup jalankan file `run_diana.bat` di root directory. Sistem akan menyalakan Backend dan Frontend secara otomatis.
 
-## Catatan Tambahan Untuk AI Berikutnya
-Jika Anda (Model AI) membaca file ini di masa depan, pahami bahwa Anda sedang membantu mengelola **Powder AI**. Harap sesuaikan bantuan Anda dengan struktur di atas. Jangan menginstal dependensi (pip) kecuali sangat dibutuhkan, karena filosofi proyek ini adalah menggunakan sebisa mungkin modul bawaan standar Python (seperti `difflib`, `urllib`, `re`) agar tetap "Sederhana dan Ringan".
+## Filosofi
+Diana AI dibangun untuk menjadi asisten yang "Sederhana, Ringan, dan Belajar". Fokus utamanya adalah pada interaksi yang bermakna dan pertumbuhan pengetahuan yang didorong oleh pengguna.

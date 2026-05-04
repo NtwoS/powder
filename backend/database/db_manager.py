@@ -2,7 +2,7 @@ import sqlite3
 import os
 import json
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'powder.db')
+DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'diana.db')
 
 def init_db():
     """Inisialisasi database dan buat tabel jika belum ada."""
@@ -33,9 +33,18 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             sender TEXT NOT NULL,
             message TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_locked INTEGER DEFAULT 0
         )
     ''')
+    
+    # Migrasi: Tambahkan kolom is_locked dan session_id jika belum ada (untuk DB lama)
+    try:
+        cursor.execute('ALTER TABLE chat_history ADD COLUMN is_locked INTEGER DEFAULT 0')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE chat_history ADD COLUMN session_id TEXT')
+    except: pass
     
     # Tabel untuk pengaturan (seperti durasi simpan history)
     cursor.execute('''
@@ -49,6 +58,9 @@ def init_db():
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('history_days', '7'))
     # Set default personality (ceria) jika belum ada
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('personality', 'ceria'))
+    # Set default Ollama settings
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_enabled', 'true'))
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_model', 'qwen2:0.5b'))
     
     conn.commit()
     conn.close()
@@ -119,26 +131,20 @@ def get_vocabulary():
     conn.close()
     return [row[0] for row in rows]
 
-def add_new_intent(pattern, response_text):
+def add_new_intent(pattern, response_data):
     """Menambahkan atau memperbarui pengetahuan baru."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Cek apakah pola sudah ada
-    cursor.execute('SELECT responses FROM intents WHERE pattern = ?', (pattern,))
-    row = cursor.fetchone()
-    
-    if row:
-        # Jika sudah ada, tambahkan ke list respon yang ada
-        responses = json.loads(row[0])
-        if response_text not in responses:
-            responses.append(response_text)
-        cursor.execute('UPDATE intents SET responses = ? WHERE pattern = ?', 
-                       (json.dumps(responses), pattern))
+    # Jika response_data adalah string tunggal, bungkus dalam list
+    if isinstance(response_data, str):
+        responses = [response_data]
     else:
-        # Jika baru, buat entri baru
-        cursor.execute('INSERT INTO intents (pattern, responses) VALUES (?, ?)', 
-                       (pattern, json.dumps([response_text])))
+        responses = response_data
+
+    # Gunakan INSERT OR REPLACE untuk menimpa pengetahuan lama dengan yang baru
+    cursor.execute('INSERT OR REPLACE INTO intents (pattern, responses) VALUES (?, ?)', 
+                   (pattern, json.dumps(responses)))
         
     # Tambahkan kosa kata baru ke vocabulary
     words = pattern.replace('\\b', '').replace('(', '').replace(')', '').replace('|', ' ').split()
@@ -163,10 +169,10 @@ def get_chat_history():
     """Mengambil riwayat chat yang masih berlaku."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT sender, message, timestamp FROM chat_history ORDER BY timestamp ASC')
+    cursor.execute('SELECT id, sender, message, timestamp, is_locked FROM chat_history ORDER BY timestamp ASC')
     rows = cursor.fetchall()
     conn.close()
-    return [{"sender": row[0], "message": row[1], "time": row[2]} for row in rows]
+    return [{"id": row[0], "sender": row[1], "message": row[2], "time": row[3], "is_locked": row[4]} for row in rows]
 
 def delete_old_history():
     """Menghapus history yang sudah melewati batas hari yang ditentukan."""
@@ -192,3 +198,30 @@ def update_history_duration(days):
     conn.commit()
     conn.close()
     return f"Durasi history berhasil diubah menjadi {days} hari."
+
+def clear_chat_history():
+    """Menghapus seluruh riwayat chat (kecuali yang dikunci)."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM chat_history WHERE is_locked = 0')
+    conn.commit()
+    conn.close()
+    return True
+
+def delete_chat_message(msg_id):
+    """Menghapus satu pesan spesifik."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM chat_history WHERE id = ? AND is_locked = 0', (msg_id,))
+    conn.commit()
+    conn.close()
+    return True
+
+def toggle_chat_lock(msg_id):
+    """Mengunci atau membuka kunci pesan."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE chat_history SET is_locked = 1 - is_locked WHERE id = ?', (msg_id,))
+    conn.commit()
+    conn.close()
+    return True

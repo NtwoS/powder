@@ -1,13 +1,18 @@
 :root {
-    --bg-color: #111111;
-    --sidebar-bg: #171717;
-    --primary: #6366f1;
-    --text: #f8fafc;
-    --text-dim: #94a3b8;
-    --glass: rgba(255, 255, 255, 0.05);
-    --user-msg: #4f46e5;
-    --bot-msg: #262626;
-    --danger: #ef4444;
+    --bg-color: #0a0a0a;
+    --sidebar-bg: #0f0f0f;
+    --primary: #00f2ff; /* Neon Blue */
+    --accent: #ff00ff;  /* Neon Pink */
+    --secondary: #a855f7; /* Neon Purple */
+    --text: #ffffff;
+    --text-dim: #707070;
+    --glass: rgba(255, 255, 255, 0.03);
+    --user-msg: #202020;
+    --bot-msg: transparent;
+    --input-bg: #1a1a1a;
+    --danger: #f43f5e;
+    --glow: none;
+    --glow-pink: none;
 }
 
 * {
@@ -32,11 +37,11 @@ body {
 
 /* SIDEBAR STYLES */
 .sidebar {
-    width: 260px;
+    width: 240px;
     background-color: var(--sidebar-bg);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--glass);
+    border-right: 1px solid rgba(255,255,255,0.05);
     transition: all 0.3s ease;
 }
 
@@ -51,8 +56,12 @@ body {
 }
 
 .logo h1 {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .dot {
@@ -60,7 +69,7 @@ body {
     height: 10px;
     background-color: var(--primary);
     border-radius: 50%;
-    box-shadow: 0 0 10px var(--primary);
+    box-shadow: var(--glow);
 }
 
 .sidebar-nav {
@@ -74,12 +83,12 @@ body {
 .nav-item {
     background: transparent;
     border: none;
-    color: var(--text-dim);
+    color: var(--text);
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
-    border-radius: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
     cursor: pointer;
     font-family: inherit;
     font-size: 0.9rem;
@@ -93,8 +102,9 @@ body {
 }
 
 .nav-item.active {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(0, 242, 255, 0.1);
     color: var(--primary);
+    box-shadow: inset 4px 0 0 var(--primary);
 }
 
 .nav-icon {
@@ -153,59 +163,75 @@ body {
     flex-direction: column;
     background-color: var(--bg-color);
     position: relative;
+    align-items: center;
 }
 
 #chat-container {
+    width: 100%;
+    max-width: 800px;
     flex: 1;
-    padding: 40px 15% 100px 15%;
+    padding: 60px 20px 150px 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 40px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--glass) transparent;
+    gap: 30px;
+    scrollbar-width: none;
 }
 
 #chat-container::-webkit-scrollbar {
-    width: 6px;
+    display: none;
 }
 
-#chat-container::-webkit-scrollbar-thumb {
-    background-color: var(--glass);
-    border-radius: 10px;
+/* Empty State Logo */
+.empty-state {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    opacity: 0.3;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.empty-state img, .empty-state .logo-icon {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(var(--glow));
 }
 
 .message {
-    max-width: 85%;
-    padding: 14px 20px;
-    border-radius: 12px;
+    max-width: 90%;
     line-height: 1.6;
-    font-size: 0.95rem;
-    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1rem;
+    animation: fadeInUp 0.3s ease;
     position: relative;
-    word-wrap: break-word;
-    white-space: pre-wrap;
 }
 
 .user {
     align-self: flex-end;
-    background: transparent;
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--user-msg);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 20px;
 }
 
 .bot {
     align-self: flex-start;
     background-color: var(--bot-msg);
-    color: #e2e8f0;
-    border: 1px solid var(--glass);
+    color: white;
+    padding: 12px 0;
+    width: 100%;
 }
 
 .message::before {
     content: attr(data-sender);
     position: absolute;
     top: -22px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -218,8 +244,8 @@ body {
 }
 
 .bot::before {
-    left: 4px;
-    content: "Powder";
+    left: 0;
+    content: "Diana";
 }
 
 .system {
@@ -229,29 +255,33 @@ body {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+    opacity: 0.5;
 }
 
 .chat-footer {
     position: absolute;
-    bottom: 0;
-    left: 0;
+    bottom: 30px;
     width: 100%;
-    padding: 20px 15% 40px 15%;
-    background: linear-gradient(to top, var(--bg-color) 80%, transparent);
+    max-width: 760px;
+    padding: 0 20px;
+    z-index: 10;
 }
 
 #chat-form {
     display: flex;
-    gap: 15px;
-    background: #212121;
-    padding: 12px 12px 12px 24px;
-    border-radius: 14px;
+    align-items: center;
+    gap: 10px;
+    background: var(--input-bg);
+    padding: 8px 12px;
+    border-radius: 24px;
     border: 1px solid var(--glass);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 #chat-form:focus-within {
-    border-color: rgba(255,255,255,0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: #222;
 }
 
 #chat-form input {
@@ -262,15 +292,16 @@ body {
     font-family: inherit;
     font-size: 1rem;
     outline: none;
+    padding: 10px 15px;
 }
 
-#chat-form button {
-    background: var(--primary);
-    color: white;
+.btn-icon {
+    background: #2a2a2a;
+    color: #a0a0a0;
     border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -278,8 +309,27 @@ body {
     transition: all 0.2s;
 }
 
-#chat-form button:hover {
-    background: #4f46e5;
+.btn-icon:hover {
+    background: #3a3a3a;
+    color: var(--primary);
+}
+
+#chat-form button[type="submit"] {
+    background: #333;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#chat-form button[type="submit"]:hover {
+    background: var(--primary);
 }
 
 .admin-header {
@@ -445,7 +495,8 @@ td {
 .clickable-card:hover {
     border-color: var(--primary);
     transform: translateY(-2px);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(0, 242, 255, 0.05);
+    box-shadow: var(--glow);
 }
 
 .card-icon {
@@ -456,14 +507,16 @@ td {
 }
 
 .status-badge {
-    background: var(--primary);
+    background: var(--accent);
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-top: 10px;
     display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .card-arrow {
@@ -500,7 +553,8 @@ td {
 
 .personality-card.active {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(0, 242, 255, 0.05);
+    box-shadow: var(--glow);
 }
 
 .section-header {
@@ -544,7 +598,7 @@ td {
 }
 
 .btn-save {
-    background: var(--primary);
+    background: var(--user-msg);
     color: white;
     border: none;
     padding: 8px 20px;
@@ -552,6 +606,12 @@ td {
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s;
+    box-shadow: var(--glow);
+}
+
+.btn-save:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 20px rgba(0, 242, 255, 0.4);
 }
 
 @keyframes fadeInUp {
