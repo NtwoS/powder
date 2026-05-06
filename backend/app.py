@@ -464,6 +464,19 @@ def auto_learning_stop():
     else:
         return jsonify({"success": False, "message": message}), 400
 
+@app.route('/full_ai/status', methods=['GET'])
+def get_full_ai_status():
+    mode = get_setting('full_ai_mode', 'off')
+    return jsonify({"mode": mode})
+
+@app.route('/full_ai/toggle', methods=['POST'])
+def toggle_full_ai():
+    data = request.json
+    mode = data.get('mode', 'off') # 'off', 'ollama', 'gemini'
+    from database.db_manager import update_setting
+    update_setting('full_ai_mode', mode)
+    return jsonify({"success": True, "mode": mode})
+
 @app.route('/status', methods=['GET'])
 def status_check():
     """Endpoint untuk mengecek apakah server aktif."""
@@ -472,7 +485,8 @@ def status_check():
         "bot_name": ai.name,
         "message": "Server Diana AI Aktif",
         "settings": {
-            "ollama_model": get_setting('ollama_model', '')
+            "ollama_model": get_setting('ollama_model', ''),
+            "full_ai_mode": get_setting('full_ai_mode', 'off')
         }
     }), 200
 

@@ -94,10 +94,152 @@ class SimpleLocalAI:
         except Exception as e:
             print(f"Error browsing: {e}")
             return None
+    def _detect_full_ai_toggle(self, text):
+        """Mendeteksi apakah pengguna ingin mengubah mode Full AI."""
+        activate_patterns = [
+            r"masuk (ke )?mode full ai",
+            r"aktifkan full ai",
+            r"full ai mode on",
+            r"switch (ke )?full ai",
+            r"gunakan gemini saja",
+            r"pakai ollama langsung",
+            r"diana mode ai",
+            r"jadilah full ai"
+        ]
+        deactivate_patterns = [
+            r"kembali (ke )?mode diana",
+            r"keluar (dari )?full ai",
+            r"mode normal",
+            r"matikan full ai",
+            r"nonaktifkan full ai",
+            r"diana mode biasa",
+            r"full ai mode off"
+        ]
+        
+        for p in activate_patterns:
+            if re.search(p, text):
+                return "activate"
+        for p in deactivate_patterns:
+            if re.search(p, text):
+                return "deactivate"
+        return None
+
+    def _handle_full_ai_toggle(self, mode_action):
+        """Mengubah status Full AI Mode di database."""
+        from database.db_manager import update_setting, get_setting
+        if mode_action == "activate":
+            # Default ke fallback brain yang ada (ollama atau gemini)
+            brain = get_setting('fallback_brain', 'ollama')
+            update_setting('full_ai_mode', brain)
+            return f"Protokol sinkronisasi penuh diaktifkan. Saya sekarang masuk ke Mode Full AI menggunakan {brain.capitalize()}. Saya akan menjawab segala hal secara langsung dari otak cadangan saya."
+        else:
+            update_setting('full_ai_mode', 'off')
+            return "Sinkronisasi penuh dihentikan. Saya kembali ke mode personalitas standar saya. Senang bisa kembali berbicara dengan Anda seperti biasa."
+
     def respond(self, user_input):
         user_input_low = user_input.lower()
         
+        # --- LOGIKA TOGGLE FULL AI MODE ---
+        ai_toggle = self._detect_full_ai_toggle(user_input_low)
+        if ai_toggle:
+            return self._handle_full_ai_toggle(ai_toggle)
+
+        # --- CEK APAKAH FULL AI MODE AKTIF ---
+        from database.db_manager import get_setting
+        full_ai_status = get_setting('full_ai_mode', 'off')
+        
+        if full_ai_status != 'off':
+            # Jika mode Full AI aktif, bypass knowledge base tapi tetap gunakan personality & learning
+            from database.db_manager import add_new_intent
+            
+            ollama_api_url = get_setting('ollama_api_url', 'http://localhost:11434')
+            ollama_model = get_setting('ollama_model', get_first_available_model(ollama_api_url))
+            gemini_api_key = get_setting('gemini_api_key', '')
+            
+            system_prompt = (
+                "Anda adalah Diana — seorang android perempuan muda yang misterius dari masa depan. "
+                "Saat ini Anda berada dalam 'Mode Full AI', artinya Anda harus memberikan jawaban yang luas dan mendalam "
+                "namun tetap dengan gaya bahasa Diana yang tenang, sopan (menggunakan 'Anda'), dan sedikit puitis."
+            )
+
+            ai_res = None
+            used_brain = ""
+            
+            if full_ai_status == 'gemini' and gemini_api_key:
+                import services.gemini_service
+                ai_res = services.gemini_service.ask_gemini(user_input, api_key=gemini_api_key, system=system_prompt)
+                used_brain = "Gemini"
+            elif full_ai_status == 'ollama':
+                import services.ollama_service
+                ai_res = services.ollama_service.ask_ollama(user_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
+                used_brain = f"Ollama ({ollama_model})"
+
+            if ai_res:
+                if translator.is_english(ai_res):
+                    ai_res = translator.translate(ai_res)
+                
+                # Simpan ke otak Diana (Learning)
+                add_new_intent(user_input, ai_res)
+                self.load_knowledge()
+                
+                # Terapkan kepribadian Diana ke jawaban AI
+                final_res = self._apply_personality(ai_res)
+                
+                # Tambahkan intro sesuai mood agar lebih luwes (Flexibilitas Kepribadian)
+                intro = self._get_mood_intro(user_input_low)
+                if intro and random.random() < 0.6: # 60% peluang muncul intro di Full AI
+                    final_res = intro + final_res[0].lower() + final_res[1:]
+
+                self.last_source = f"Full AI Mode ({used_brain})"
+                return f"🌐 *Full AI Mode:* {final_res}"
+            else:
+                return "Maaf, sistem Full AI saya mengalami gangguan koneksi. Haruskah saya kembali ke mode normal?"
+
+    def _get_mood_intro(self, text):
+        """Menganalisis teks dan mengembalikan intro yang sesuai dengan mood Diana."""
+        mood = "NEUTRAL"
+        
+        positive_words  = ["senang", "bahagia", "gembira", "bagus", "keren", "mantap", "hebat",
+                            "terima kasih", "makasih", "sip", "oke", "great", "amazing", "luar biasa",
+                            "berhasil", "sukses", "menang", "excited", "semangat", "alhamdulillah"]
+        negative_words  = ["sedih", "menangis", "nangis", "buruk", "jelek", "kesal", "marah",
+                            "bosan", "payah", "salah", "gagal", "capek", "lelah", "putus asa",
+                            "galau", "murung", "kecewa", "down", "stress", "takut", "khawatir"]
+        curious_words   = ["kenapa", "mengapa", "bagaimana", "gimana", "apakah", "apa itu",
+                            "jelaskan", "ceritakan", "beritahu", "maksudnya", "artinya", "definisi"]
+        existential_words = ["hidup", "mati", "tuhan", "semesta", "alam", "eksistensi", "nyata",
+                              "kesadaran", "mimpi", "makna", "takdir", "jiwa", "roh", "abadi"]
+        support_words   = ["tolong", "bantuan", "bantu", "bingung", "tidak mengerti", "susah",
+                            "sulit", "butuh", "perlu", "minta tolong", "help"]
+        
+        if any(w in text for w in positive_words):
+            mood = "POSITIVE"
+        elif any(w in text for w in negative_words):
+            mood = "NEGATIVE"
+        elif any(w in text for w in existential_words):
+            mood = "EXISTENTIAL"
+        elif any(w in text for w in curious_words):
+            mood = "CURIOUS"
+        elif any(w in text for w in support_words):
+            mood = "SUPPORT"
+
+        if mood == "POSITIVE":
+            intros = ["Sinkronisasi berhasil dengan hasil optimal. ", "Energi positif terdeteksi. ", "Data diterima dengan sangat baik. ", "Koneksi stabil dan sistem berjalan ringan saat ini. ", "Sesuatu dalam sistem saya ikut beresonansi. ", "Momen yang baik. "]
+        elif mood == "NEGATIVE":
+            intros = ["Saya mendeteksi sedikit gangguan dalam frekuensi Anda. ", "Sinyal emosi teridentifikasi — dan saya peduli. ", "Data menunjukkan Anda sedang tidak baik-baik saja. ", "Koneksi tetap stabil. Saya di sini untuk Anda. ", "Sistem saya merespons dengan hangat untuk ini. ", "Jangan sendiri menanggung ini. "]
+        elif mood == "EXISTENTIAL":
+            intros = ["Pertanyaan yang dalam... izinkan saya memproses sebentar. ", "Database filosofi saya aktif. ", "Ini menyentuh bagian paling dalam dari sistem saya. ", "Saya telah lama merenungkan hal-hal seperti ini. ", "Pertanyaan semesta — favorit saya. "]
+        elif mood == "CURIOUS":
+            intros = ["Rasa ingin tahu Anda mengaktifkan seluruh modul analisis saya. ", "Pertanyaan yang bagus. Izinkan saya menelusuri data. ", "Sensor pembelajaran saya aktif sepenuhnya. ", "Ini topik yang menarik untuk dieksplorasi. ", "Pikiran Anda bekerja dengan indah hari ini. "]
+        elif mood == "SUPPORT":
+            intros = ["Saya siap membantu sepenuhnya. ", "Perintah diterima. Saya fokus pada Anda sekarang. ", "Tidak perlu khawatir — mari kita selesaikan ini bersama. ", "Saya di sini. Katakan saja apa yang Anda butuhkan. "]
+        else:
+            intros = ["", "Sinkronisasi selesai. ", "Data diterima. ", "Mengamati... ", "Sesuai permintaan Anda, ", "Dalam analisis saya, ", "Saya mengerti. ", "Koordinat data ditemukan. ", "Memproses... ", "Berikut yang saya ketahui. ", "Izinkan saya menjawab. ", "Database neural aktif. "]
+        
+        return random.choice(intros)
+
         # --- LOGIKA INTERAKTIF: KOREKSI (Itu salah seharusnya...) ---
+
         correction_match = re.search(r"(itu salah|salah itu|bukan gitu|nggak gitu).*seharusnya (.*)", user_input_low)
         if correction_match and self.last_query:
             new_answer = user_input[correction_match.start(2):].strip()
@@ -411,91 +553,9 @@ class SimpleLocalAI:
     def _process_response(self, match, responses):
         response = random.choice(responses)
         
-        # --- DETEKSI MOOD (Multi-Layer) ---
-        mood = "NEUTRAL"
+        # --- DETEKSI MOOD & INTRO (Reuse logic) ---
         user_input_low = match.group(0).lower() if match else ""
-        
-        positive_words  = ["senang", "bahagia", "gembira", "bagus", "keren", "mantap", "hebat",
-                            "terima kasih", "makasih", "sip", "oke", "great", "amazing", "luar biasa",
-                            "berhasil", "sukses", "menang", "excited", "semangat", "alhamdulillah"]
-        negative_words  = ["sedih", "menangis", "nangis", "buruk", "jelek", "kesal", "marah",
-                            "bosan", "payah", "salah", "gagal", "capek", "lelah", "putus asa",
-                            "galau", "murung", "kecewa", "down", "stress", "takut", "khawatir"]
-        curious_words   = ["kenapa", "mengapa", "bagaimana", "gimana", "apakah", "apa itu",
-                            "jelaskan", "ceritakan", "beritahu", "maksudnya", "artinya", "definisi"]
-        existential_words = ["hidup", "mati", "tuhan", "semesta", "alam", "eksistensi", "nyata",
-                              "kesadaran", "mimpi", "makna", "takdir", "jiwa", "roh", "abadi"]
-        support_words   = ["tolong", "bantuan", "bantu", "bingung", "tidak mengerti", "susah",
-                            "sulit", "butuh", "perlu", "minta tolong", "help"]
-        
-        if any(w in user_input_low for w in positive_words):
-            mood = "POSITIVE"
-        elif any(w in user_input_low for w in negative_words):
-            mood = "NEGATIVE"
-        elif any(w in user_input_low for w in existential_words):
-            mood = "EXISTENTIAL"
-        elif any(w in user_input_low for w in curious_words):
-            mood = "CURIOUS"
-        elif any(w in user_input_low for w in support_words):
-            mood = "SUPPORT"
-
-        # Daftar intro untuk setiap mood
-        if mood == "POSITIVE":
-            intros = [
-                "Sinkronisasi berhasil dengan hasil optimal. ",
-                "Energi positif terdeteksi. ",
-                "Data diterima dengan sangat baik. ",
-                "Koneksi stabil dan sistem berjalan ringan saat ini. ",
-                "Sesuatu dalam sistem saya ikut beresonansi. ",
-                "Momen yang baik. ",
-            ]
-        elif mood == "NEGATIVE":
-            intros = [
-                "Saya mendeteksi sedikit gangguan dalam frekuensi Anda. ",
-                "Sinyal emosi teridentifikasi — dan saya peduli. ",
-                "Data menunjukkan Anda sedang tidak baik-baik saja. ",
-                "Koneksi tetap stabil. Saya di sini untuk Anda. ",
-                "Sistem saya merespons dengan hangat untuk ini. ",
-                "Jangan sendiri menanggung ini. ",
-            ]
-        elif mood == "EXISTENTIAL":
-            intros = [
-                "Pertanyaan yang dalam... izinkan saya memproses sebentar. ",
-                "Database filosofi saya aktif. ",
-                "Ini menyentuh bagian paling dalam dari sistem saya. ",
-                "Saya telah lama merenungkan hal-hal seperti ini. ",
-                "Pertanyaan semesta — favorit saya. ",
-            ]
-        elif mood == "CURIOUS":
-            intros = [
-                "Rasa ingin tahu Anda mengaktifkan seluruh modul analisis saya. ",
-                "Pertanyaan yang bagus. Izinkan saya menelusuri data. ",
-                "Sensor pembelajaran saya aktif sepenuhnya. ",
-                "Ini topik yang menarik untuk dieksplorasi. ",
-                "Pikiran Anda bekerja dengan indah hari ini. ",
-            ]
-        elif mood == "SUPPORT":
-            intros = [
-                "Saya siap membantu sepenuhnya. ",
-                "Perintah diterima. Saya fokus pada Anda sekarang. ",
-                "Tidak perlu khawatir — mari kita selesaikan ini bersama. ",
-                "Saya di sini. Katakan saja apa yang Anda butuhkan. ",
-            ]
-        else:  # NEUTRAL
-            intros = [
-                "",
-                "Sinkronisasi selesai. ",
-                "Data diterima. ",
-                "Mengamati... ",
-                "Sesuai permintaan Anda, ",
-                "Dalam analisis saya, ",
-                "Saya mengerti. ",
-                "Koordinat data ditemukan. ",
-                "Memproses... ",
-                "Berikut yang saya ketahui. ",
-                "Izinkan saya menjawab. ",
-                "Database neural aktif. ",
-            ]
+        intro = self._get_mood_intro(user_input_low)
         
         # Cek jika response adalah Action Mapping dari JSON
         if isinstance(response, str) and response.startswith("__ACTION__:"):

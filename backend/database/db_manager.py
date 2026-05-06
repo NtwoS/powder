@@ -68,6 +68,9 @@ def init_db():
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('fallback_brain', 'ollama'))
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('gemini_api_key', ''))
     
+    # Set default Full AI Mode (off)
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('full_ai_mode', 'off'))
+    
     conn.commit()
     conn.close()
 

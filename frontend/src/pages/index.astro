@@ -220,6 +220,41 @@
 			input:checked + .slider:before {
 				transform: translateX(24px);
 			}
+
+			/* Full AI Mode Badge CSS */
+			.full-ai-badge {
+				margin-top: 10px;
+				padding: 6px 12px;
+				background: rgba(234, 179, 8, 0.1);
+				border: 1px solid rgba(234, 179, 8, 0.3);
+				border-radius: 20px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 0.7rem;
+				color: #eab308;
+				font-weight: 600;
+				letter-spacing: 0.5px;
+				animation: border-pulse 2s infinite;
+			}
+			.pulse-dot-yellow {
+				width: 8px;
+				height: 8px;
+				background: #eab308;
+				border-radius: 50%;
+				box-shadow: 0 0 8px #eab308;
+				animation: pulse-yellow 1.5s infinite;
+			}
+			@keyframes pulse-yellow {
+				0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+				70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(234, 179, 8, 0); }
+				100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+			}
+			@keyframes border-pulse {
+				0% { border-color: rgba(234, 179, 8, 0.3); }
+				50% { border-color: rgba(234, 179, 8, 0.8); }
+				100% { border-color: rgba(234, 179, 8, 0.3); }
+			}
 		</style>
 	</head>
 	<body>
@@ -230,6 +265,11 @@
 					<div class="logo">
 						<span class="dot"></span>
 						<h1>Diana AI</h1>
+					</div>
+					<!-- Full AI Mode Global Badge -->
+					<div id="global-full-ai-badge" class="full-ai-badge" style="display: none;">
+						<span class="pulse-dot-yellow"></span>
+						MODE FULL AI: <span id="full-ai-label">OLLAMA</span>
 					</div>
 				</div>
 
@@ -371,6 +411,18 @@
 							<h4>Manajemen Keuangan</h4>
 							<p>Catat pengeluaran, pemasukan, dan biarkan Diana menghitung saldo Anda.</p>
 							<div class="status-badge" style="background: #10b981;">Buka Kalkulator</div>
+						</div>
+
+						<!-- Card Full AI Mode -->
+						<div class="job-card" id="card-skill-full-ai" style="border: 1px solid rgba(234, 179, 8, 0.2); background: linear-gradient(145deg, rgba(234, 179, 8, 0.05) 0%, rgba(0,0,0,0) 100%);">
+							<div class="p-icon">🌐</div>
+							<h4>Mode Full AI</h4>
+							<p>Diana menjawab langsung menggunakan AI eksternal. Semua jawaban otomatis masuk ke otak Diana.</p>
+							<div class="input-group" style="margin-top: 15px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+								<button class="btn-model-select" id="btn-full-ai-ollama" style="font-size: 0.65rem; padding: 5px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #ccc; cursor: pointer; transition: all 0.2s;">Ollama</button>
+								<button class="btn-model-select" id="btn-full-ai-gemini" style="font-size: 0.65rem; padding: 5px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #ccc; cursor: pointer; transition: all 0.2s;">Gemini</button>
+								<button class="btn-model-select" id="btn-full-ai-off" style="font-size: 0.65rem; padding: 5px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; cursor: pointer; transition: all 0.2s;">OFF</button>
+							</div>
 						</div>
 
 						<!-- Placeholder -->
@@ -1410,8 +1462,25 @@
 				try {
 					const res = await fetch('http://127.0.0.1:5000/status');
 					if (res.ok) {
+						const data = await res.json();
 						status.textContent = 'Online';
 						status.className = 'online';
+
+						// Update Full AI Mode UI
+						const fullAiBadge = document.getElementById('global-full-ai-badge');
+						const fullAiLabel = document.getElementById('full-ai-label');
+						const chatInput = document.getElementById('chat-input');
+						
+						if (data.settings && data.settings.full_ai_mode !== 'off') {
+							fullAiBadge.style.display = 'flex';
+							fullAiLabel.textContent = data.settings.full_ai_mode.toUpperCase();
+							chatInput.placeholder = `🌐 Mode Full AI Aktif — Diana menjawab dengan ${data.settings.full_ai_mode}...`;
+							chatInput.style.border = '1px solid rgba(234, 179, 8, 0.3)';
+						} else {
+							fullAiBadge.style.display = 'none';
+							chatInput.placeholder = "Tulis pesan Anda di sini...";
+							chatInput.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+						}
 					} else {
 						throw new Error();
 					}
@@ -1420,6 +1489,28 @@
 					status.className = 'offline';
 				}
 			}
+
+			// Full AI Mode Toggle Handlers
+			async function setFullAiMode(mode) {
+				try {
+					const res = await fetch('http://127.0.0.1:5000/full_ai/toggle', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ mode: mode })
+					});
+					const data = await res.json();
+					if (data.success) {
+						showToast("Sistem Diperbarui", mode === 'off' ? "Mode Full AI dinonaktifkan." : `Mode Full AI (${mode.toUpperCase()}) diaktifkan.`);
+						checkStatus();
+					}
+				} catch (e) {
+					alert("Gagal memperbarui mode Full AI.");
+				}
+			}
+
+			document.getElementById('btn-full-ai-ollama').addEventListener('click', () => setFullAiMode('ollama'));
+			document.getElementById('btn-full-ai-gemini').addEventListener('click', () => setFullAiMode('gemini'));
+			document.getElementById('btn-full-ai-off').addEventListener('click', () => setFullAiMode('off'));
 
 			// Load Chat History from Database
 			async function loadHistory() {
