@@ -497,7 +497,7 @@ def auto_learning_status():
 if __name__ == '__main__':
     print("==========================================")
     print("       BACKEND DIANA AI AKTIF             ")
-    print("  Alamat: http://127.0.0.1:5000           ")
+    print("  Alamat: http://127.0.0.1:5050           ")
     print("==========================================")
-    # Menjalankan server di port 5000 (0.0.0.0 agar bisa diakses dari IP lokal mana pun)
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    # Menjalankan server di port 5050 (0.0.0.0 agar bisa diakses dari IP lokal mana pun)
+    app.run(host='0.0.0.0', debug=True, port=5050)

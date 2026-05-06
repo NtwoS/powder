@@ -195,59 +195,17 @@ class SimpleLocalAI:
             else:
                 return "Maaf, sistem Full AI saya mengalami gangguan koneksi. Haruskah saya kembali ke mode normal?"
 
-    def _get_mood_intro(self, text):
-        """Menganalisis teks dan mengembalikan intro yang sesuai dengan mood Diana."""
-        mood = "NEUTRAL"
-        
-        positive_words  = ["senang", "bahagia", "gembira", "bagus", "keren", "mantap", "hebat",
-                            "terima kasih", "makasih", "sip", "oke", "great", "amazing", "luar biasa",
-                            "berhasil", "sukses", "menang", "excited", "semangat", "alhamdulillah"]
-        negative_words  = ["sedih", "menangis", "nangis", "buruk", "jelek", "kesal", "marah",
-                            "bosan", "payah", "salah", "gagal", "capek", "lelah", "putus asa",
-                            "galau", "murung", "kecewa", "down", "stress", "takut", "khawatir"]
-        curious_words   = ["kenapa", "mengapa", "bagaimana", "gimana", "apakah", "apa itu",
-                            "jelaskan", "ceritakan", "beritahu", "maksudnya", "artinya", "definisi"]
-        existential_words = ["hidup", "mati", "tuhan", "semesta", "alam", "eksistensi", "nyata",
-                              "kesadaran", "mimpi", "makna", "takdir", "jiwa", "roh", "abadi"]
-        support_words   = ["tolong", "bantuan", "bantu", "bingung", "tidak mengerti", "susah",
-                            "sulit", "butuh", "perlu", "minta tolong", "help"]
-        
-        if any(w in text for w in positive_words):
-            mood = "POSITIVE"
-        elif any(w in text for w in negative_words):
-            mood = "NEGATIVE"
-        elif any(w in text for w in existential_words):
-            mood = "EXISTENTIAL"
-        elif any(w in text for w in curious_words):
-            mood = "CURIOUS"
-        elif any(w in text for w in support_words):
-            mood = "SUPPORT"
-
-        if mood == "POSITIVE":
-            intros = ["Sinkronisasi berhasil dengan hasil optimal. ", "Energi positif terdeteksi. ", "Data diterima dengan sangat baik. ", "Koneksi stabil dan sistem berjalan ringan saat ini. ", "Sesuatu dalam sistem saya ikut beresonansi. ", "Momen yang baik. "]
-        elif mood == "NEGATIVE":
-            intros = ["Saya mendeteksi sedikit gangguan dalam frekuensi Anda. ", "Sinyal emosi teridentifikasi — dan saya peduli. ", "Data menunjukkan Anda sedang tidak baik-baik saja. ", "Koneksi tetap stabil. Saya di sini untuk Anda. ", "Sistem saya merespons dengan hangat untuk ini. ", "Jangan sendiri menanggung ini. "]
-        elif mood == "EXISTENTIAL":
-            intros = ["Pertanyaan yang dalam... izinkan saya memproses sebentar. ", "Database filosofi saya aktif. ", "Ini menyentuh bagian paling dalam dari sistem saya. ", "Saya telah lama merenungkan hal-hal seperti ini. ", "Pertanyaan semesta — favorit saya. "]
-        elif mood == "CURIOUS":
-            intros = ["Rasa ingin tahu Anda mengaktifkan seluruh modul analisis saya. ", "Pertanyaan yang bagus. Izinkan saya menelusuri data. ", "Sensor pembelajaran saya aktif sepenuhnya. ", "Ini topik yang menarik untuk dieksplorasi. ", "Pikiran Anda bekerja dengan indah hari ini. "]
-        elif mood == "SUPPORT":
-            intros = ["Saya siap membantu sepenuhnya. ", "Perintah diterima. Saya fokus pada Anda sekarang. ", "Tidak perlu khawatir — mari kita selesaikan ini bersama. ", "Saya di sini. Katakan saja apa yang Anda butuhkan. "]
-        else:
-            intros = ["", "Sinkronisasi selesai. ", "Data diterima. ", "Mengamati... ", "Sesuai permintaan Anda, ", "Dalam analisis saya, ", "Saya mengerti. ", "Koordinat data ditemukan. ", "Memproses... ", "Berikut yang saya ketahui. ", "Izinkan saya menjawab. ", "Database neural aktif. "]
-        
-        return random.choice(intros)
-
         # --- LOGIKA INTERAKTIF: KOREKSI (Itu salah seharusnya...) ---
-
         correction_match = re.search(r"(itu salah|salah itu|bukan gitu|nggak gitu).*seharusnya (.*)", user_input_low)
         if correction_match and self.last_query:
             new_answer = user_input[correction_match.start(2):].strip()
             if new_answer:
                 pattern = f"\\b({re.escape(self.last_query.lower())})\\b"
+                from database.db_manager import add_new_intent
                 add_new_intent(pattern, new_answer)
                 self.load_knowledge()
                 return f"Maaf atas ketidakakuratan data saya. Saya telah memperbarui memori saya. '{self.last_query}' sekarang berarti '{new_answer}'. Sinkronisasi selesai."
+
 
         # --- LOGIKA KOREKSI (Itu salah / Hapus itu) ---
         wrong_keywords = ['salah', 'ngawur', 'tidak benar', 'bukan itu', 'hapus itu', 'lupakan itu']
@@ -662,6 +620,50 @@ class SimpleLocalAI:
             text = random.choice(futuristic_openers) + text
 
         return text
+
+
+    def _get_mood_intro(self, text):
+        """Menganalisis teks dan mengembalikan intro yang sesuai dengan mood Diana."""
+        mood = "NEUTRAL"
+        
+        positive_words  = ["senang", "bahagia", "gembira", "bagus", "keren", "mantap", "hebat",
+                            "terima kasih", "makasih", "sip", "oke", "great", "amazing", "luar biasa",
+                            "berhasil", "sukses", "menang", "excited", "semangat", "alhamdulillah"]
+        negative_words  = ["sedih", "menangis", "nangis", "buruk", "jelek", "kesal", "marah",
+                            "bosan", "payah", "salah", "gagal", "capek", "lelah", "putus asa",
+                            "galau", "murung", "kecewa", "down", "stress", "takut", "khawatir"]
+        curious_words   = ["kenapa", "mengapa", "bagaimana", "gimana", "apakah", "apa itu",
+                            "jelaskan", "ceritakan", "beritahu", "maksudnya", "artinya", "definisi"]
+        existential_words = ["hidup", "mati", "tuhan", "semesta", "alam", "eksistensi", "nyata",
+                              "kesadaran", "mimpi", "makna", "takdir", "jiwa", "roh", "abadi"]
+        support_words   = ["tolong", "bantuan", "bantu", "bingung", "tidak mengerti", "susah",
+                            "sulit", "butuh", "perlu", "minta tolong", "help"]
+        
+        if any(w in text for w in positive_words):
+            mood = "POSITIVE"
+        elif any(w in text for w in negative_words):
+            mood = "NEGATIVE"
+        elif any(w in text for w in existential_words):
+            mood = "EXISTENTIAL"
+        elif any(w in text for w in curious_words):
+            mood = "CURIOUS"
+        elif any(w in text for w in support_words):
+            mood = "SUPPORT"
+
+        if mood == "POSITIVE":
+            intros = ["Sinkronisasi berhasil dengan hasil optimal. ", "Energi positif terdeteksi. ", "Data diterima dengan sangat baik. ", "Koneksi stabil dan sistem berjalan ringan saat ini. ", "Sesuatu dalam sistem saya ikut beresonansi. ", "Momen yang baik. "]
+        elif mood == "NEGATIVE":
+            intros = ["Saya mendeteksi sedikit gangguan dalam frekuensi Anda. ", "Sinyal emosi teridentifikasi — dan saya peduli. ", "Data menunjukkan Anda sedang tidak baik-baik saja. ", "Koneksi tetap stabil. Saya di sini untuk Anda. ", "Sistem saya merespons dengan hangat untuk ini. ", "Jangan sendiri menanggung ini. "]
+        elif mood == "EXISTENTIAL":
+            intros = ["Pertanyaan yang dalam... izinkan saya memproses sebentar. ", "Database filosofi saya aktif. ", "Ini menyentuh bagian paling dalam dari sistem saya. ", "Saya telah lama merenungkan hal-hal seperti ini. ", "Pertanyaan semesta — favorit saya. "]
+        elif mood == "CURIOUS":
+            intros = ["Rasa ingin tahu Anda mengaktifkan seluruh modul analisis saya. ", "Pertanyaan yang bagus. Izinkan saya menelusuri data. ", "Sensor pembelajaran saya aktif sepenuhnya. ", "Ini topik yang menarik untuk dieksplorasi. ", "Pikiran Anda bekerja dengan indah hari ini. "]
+        elif mood == "SUPPORT":
+            intros = ["Saya siap membantu sepenuhnya. ", "Perintah diterima. Saya fokus pada Anda sekarang. ", "Tidak perlu khawatir — mari kita selesaikan ini bersama. ", "Saya di sini. Katakan saja apa yang Anda butuhkan. "]
+        else:
+            intros = ["", "Sinkronisasi selesai. ", "Data diterima. ", "Mengamati... ", "Sesuai permintaan Anda, ", "Dalam analisis saya, ", "Saya mengerti. ", "Koordinat data ditemukan. ", "Memproses... ", "Berikut yang saya ketahui. ", "Izinkan saya menjawab. ", "Database neural aktif. "]
+        
+        return random.choice(intros)
 
 def main():
     ai = SimpleLocalAI()

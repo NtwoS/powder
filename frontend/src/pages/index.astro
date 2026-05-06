@@ -755,7 +755,7 @@
 			// Settings Logic
 			async function fetchSettings() {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/settings');
+					const res = await fetch('http://127.0.0.1:5050/settings');
 					const data = await res.json();
 					
 					// Populate Inputs
@@ -791,7 +791,7 @@
 			// Browse Ollama Models Path
 			document.getElementById('btn-browse-ollama').addEventListener('click', async () => {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/settings/browse_folder');
+					const res = await fetch('http://127.0.0.1:5050/settings/browse_folder');
 					const data = await res.json();
 					if (data.success) {
 						document.getElementById('input-ollama-path').value = data.path;
@@ -806,7 +806,7 @@
 				const url = document.getElementById('input-ollama-url').value;
 				const path = document.getElementById('input-ollama-path').value;
 				try {
-					const res = await fetch('http://127.0.0.1:5000/settings', {
+					const res = await fetch('http://127.0.0.1:5050/settings', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ 
@@ -878,7 +878,7 @@
 					
 					// Save to backend
 					try {
-						await fetch('http://127.0.0.1:5000/settings', {
+						await fetch('http://127.0.0.1:5050/settings', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({ fallback_brain: brain })
@@ -891,7 +891,7 @@
 			document.getElementById('btn-save-gemini').addEventListener('click', async () => {
 				const key = document.getElementById('input-gemini-key').value;
 				try {
-					const res = await fetch('http://127.0.0.1:5000/settings', {
+					const res = await fetch('http://127.0.0.1:5050/settings', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ gemini_api_key: key })
@@ -908,7 +908,7 @@
 				selectDefaultOllama.addEventListener('change', async () => {
 					const m = selectDefaultOllama.value;
 					try {
-						const res = await fetch('http://127.0.0.1:5000/settings', {
+						const res = await fetch('http://127.0.0.1:5050/settings', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({ ollama_model: m })
@@ -1025,7 +1025,7 @@
 
 			async function updateAutolearnStatus() {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/auto_learning/status');
+					const res = await fetch('http://127.0.0.1:5050/auto_learning/status');
 					const data = await res.json();
 					
 					const reportDiv = document.getElementById('autolearn-report');
@@ -1098,7 +1098,7 @@
 				}
 
 				try {
-					const res = await fetch('http://127.0.0.1:5000/auto_learning/start', {
+					const res = await fetch('http://127.0.0.1:5050/auto_learning/start', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ 
@@ -1118,7 +1118,7 @@
 
 			btnStopLearn.addEventListener('click', async () => {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/auto_learning/stop', { method: 'POST' });
+					const res = await fetch('http://127.0.0.1:5050/auto_learning/stop', { method: 'POST' });
 					const data = await res.json();
 					if (data.success) {
 						updateAutolearnStatus();
@@ -1129,13 +1129,13 @@
 			// Browse logic for Auto Learn
 			btnBrowseAutolearn.addEventListener('click', async () => {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/settings/browse_folder');
+					const res = await fetch('http://127.0.0.1:5050/settings/browse_folder');
 					const data = await res.json();
 					if (data.success) {
 						inputLearnPath.value = data.path;
 						inputOllamaPath.value = data.path; // Sinkronkan ke pengaturan utama juga
 						// Update global setting as well
-						await fetch('http://127.0.0.1:5000/settings', {
+						await fetch('http://127.0.0.1:5050/settings', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({ ollama_models_path: data.path })
@@ -1158,7 +1158,7 @@
 				btnSyncOllama.disabled = true;
 
 				try {
-					const res = await fetch('http://127.0.0.1:5000/ollama/sync_models', {
+					const res = await fetch('http://127.0.0.1:5050/ollama/sync_models', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ path: path })
@@ -1184,11 +1184,11 @@
 			
 			async function fetchOllamaModels() {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/ollama/models');
+					const res = await fetch('http://127.0.0.1:5050/ollama/models');
 					const data = await res.json();
 					if (data.models && data.models.length > 0) {
 						// Ambil model yang sedang aktif dari server
-						const statusRes = await fetch('http://127.0.0.1:5000/status');
+						const statusRes = await fetch('http://127.0.0.1:5050/status');
 						const statusData = await statusRes.json();
 						const activeModel = statusData.settings?.ollama_model || window._savedOllamaModel || data.models[0];
 
@@ -1230,7 +1230,7 @@
 			document.getElementById('btn-save-history').addEventListener('click', async () => {
 				const days = document.getElementById('input-history-days').value;
 				try {
-					const res = await fetch('http://127.0.0.1:5000/settings', {
+					const res = await fetch('http://127.0.0.1:5050/settings', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ history_days: parseInt(days) })
@@ -1258,7 +1258,7 @@
 				}
 
 				try {
-					const res = await fetch('http://127.0.0.1:5000/ollama/run', {
+					const res = await fetch('http://127.0.0.1:5050/ollama/run', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ model_name: modelName })
@@ -1277,7 +1277,7 @@
 				tbody.innerHTML = '<tr><td colspan="4">Memuat data...</td></tr>';
 				
 				try {
-					const res = await fetch('http://127.0.0.1:5000/intents');
+					const res = await fetch('http://127.0.0.1:5050/intents');
 					const data = await res.json();
 					allIntents = data.intents;
 					selectedIntents.clear();
@@ -1317,7 +1317,7 @@
 				if (!confirm(`Hapus ${selectedIntents.size} pengetahuan terpilih?`)) return;
 				
 				try {
-					const res = await fetch('http://127.0.0.1:5000/intents/delete_bulk', {
+					const res = await fetch('http://127.0.0.1:5050/intents/delete_bulk', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ patterns: Array.from(selectedIntents) })
@@ -1390,7 +1390,7 @@
 				if (!confirm(`Hapus pengetahuan untuk pola: ${pattern}?`)) return;
 				
 				try {
-					const res = await fetch('http://127.0.0.1:5000/intents/delete', {
+					const res = await fetch('http://127.0.0.1:5050/intents/delete', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ pattern })
@@ -1432,7 +1432,7 @@
 					btnTriggerUpload.textContent = "Mengunggah...";
 					btnTriggerUpload.disabled = true;
 
-					const res = await fetch('http://127.0.0.1:5000/intents/upload', {
+					const res = await fetch('http://127.0.0.1:5050/intents/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1460,7 +1460,7 @@
 			// Check connection & get profile
 			async function checkStatus() {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/status');
+					const res = await fetch('http://127.0.0.1:5050/status');
 					if (res.ok) {
 						const data = await res.json();
 						status.textContent = 'Online';
@@ -1493,7 +1493,7 @@
 			// Full AI Mode Toggle Handlers
 			async function setFullAiMode(mode) {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/full_ai/toggle', {
+					const res = await fetch('http://127.0.0.1:5050/full_ai/toggle', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ mode: mode })
@@ -1515,7 +1515,7 @@
 			// Load Chat History from Database
 			async function loadHistory() {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/history');
+					const res = await fetch('http://127.0.0.1:5050/history');
 					const data = await res.json();
 					
 					const sidebarHistory = document.getElementById('sidebar-history');
@@ -1558,7 +1558,7 @@
 							
 							btnLock.addEventListener('click', async (e) => {
 								e.stopPropagation();
-								await fetch(`http://127.0.0.1:5000/history/lock/${h.id}`, { method: 'POST' });
+								await fetch(`http://127.0.0.1:5050/history/lock/${h.id}`, { method: 'POST' });
 								loadHistory();
 							});
 
@@ -1574,7 +1574,7 @@
 							btnDel.addEventListener('click', async (e) => {
 								e.stopPropagation();
 								if (confirm('Hapus item ini?')) {
-									await fetch(`http://127.0.0.1:5000/history/delete/${h.id}`, { method: 'POST' });
+									await fetch(`http://127.0.0.1:5050/history/delete/${h.id}`, { method: 'POST' });
 									loadHistory();
 								}
 							});
@@ -1615,7 +1615,7 @@
 			btnClearHistory.addEventListener('click', async () => {
 				if (confirm('Hapus seluruh riwayat percakapan?')) {
 					try {
-						await fetch('http://127.0.0.1:5000/history/clear', { method: 'POST' });
+						await fetch('http://127.0.0.1:5050/history/clear', { method: 'POST' });
 						container.innerHTML = '';
 						document.getElementById('empty-state').style.display = 'flex';
 						loadHistory();
@@ -1645,7 +1645,7 @@
 					const formData = new FormData();
 					formData.append('file', file);
 
-					const res = await fetch('http://127.0.0.1:5000/analyze', {
+					const res = await fetch('http://127.0.0.1:5050/analyze', {
 						method: 'POST',
 						body: formData
 					});
@@ -1691,7 +1691,7 @@
 
 			async function handleNormalChat(msg) {
 				try {
-					const res = await fetch('http://127.0.0.1:5000/chat', {
+					const res = await fetch('http://127.0.0.1:5050/chat', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ message: msg })
@@ -1715,7 +1715,7 @@
 				} else if (trainingState === 'response') {
 					const tempResponse = msg;
 					try {
-						const res = await fetch('http://127.0.0.1:5000/train', {
+						const res = await fetch('http://127.0.0.1:5050/train', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({ trigger: tempTrigger, response: tempResponse })
