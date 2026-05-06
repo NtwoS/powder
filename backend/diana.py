@@ -151,7 +151,7 @@ class SimpleLocalAI:
             
         if self.conversation_state == "AWAITING_DELETE_CONFIRMATION":
             if any(word in user_input_low for word in ["ya", "iya", "betul", "oke", "hapus", "lakukan"]):
-                from backend.database.db_manager import delete_intents_bulk
+                from database.db_manager import delete_intents_bulk
                 # Kita hapus pattern yang persis sama dengan last_query atau yang mengandungnya
                 # Cari pattern di self.responses yang mengandung last_query
                 patterns_to_delete = []
@@ -190,11 +190,7 @@ class SimpleLocalAI:
             else:
                 return "Mohon berikan informasi yang lebih lengkap agar saya bisa memahaminya dengan baik."
 
-        # Simpan query terakhir untuk referensi koreksi atau belajar
-        query_before_process = user_input
-
-        # 1. Coba cari kecocokan langsung menggunakan Regex (Presisi Tinggi)
-        # Bersihkan input dari tanda baca untuk pencocokan regex yang lebih luwes
+        # 2. Regex Pass Kedua: lebih ketat dengan word boundary & tanpa tanda baca
         clean_input = re.sub(r'[?!.,;:]', '', user_input_low).strip()
         
         for pattern, responses in self.responses.items():
