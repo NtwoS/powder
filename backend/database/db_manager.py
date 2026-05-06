@@ -58,9 +58,15 @@ def init_db():
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('history_days', '7'))
     # Set default personality (ceria) jika belum ada
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('personality', 'ceria'))
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_api_url', 'http://localhost:11434'))
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_models_path', ''))
     # Set default Ollama settings
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_enabled', 'true'))
-    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_model', 'qwen2:0.5b'))
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('ollama_model', ''))  # Kosong = otomatis pilih model pertama yang tersedia
+    
+    # Set default Gemini settings
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('fallback_brain', 'ollama'))
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('gemini_api_key', ''))
     
     conn.commit()
     conn.close()
@@ -115,7 +121,7 @@ def get_all_intents():
     """Mengambil semua pola dan respon dari database."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT pattern, responses FROM intents')
+    cursor.execute('SELECT pattern, responses FROM intents ORDER BY id DESC')
     rows = cursor.fetchall()
     conn.close()
     
@@ -154,6 +160,19 @@ def add_new_intent(pattern, response_data):
             
     conn.commit()
     conn.close()
+
+def delete_intents_bulk(patterns):
+    """Menghapus banyak pola sekaligus."""
+    if not patterns:
+        return False
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    # Gunakan query parameter berkelompok
+    placeholders = ','.join(['?'] * len(patterns))
+    cursor.execute(f'DELETE FROM intents WHERE pattern IN ({placeholders})', patterns)
+    conn.commit()
+    conn.close()
+    return True
 
 def save_chat_message(sender, message):
     """Menyimpan pesan chat ke database."""

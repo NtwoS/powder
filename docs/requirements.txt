@@ -1,9 +1,0 @@
-flask
-flask-cors
-scikit-learn
-numpy
-scipy
-joblib
-threadpoolctl
-PyPDF2
-duckduckgo_search

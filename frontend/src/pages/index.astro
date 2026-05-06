@@ -13,6 +13,214 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 		<link rel="stylesheet" href="/src/styles/index.css" />
+		<style>
+			/* Toast Notifications */
+			#toast-container {
+				position: fixed;
+				bottom: 30px;
+				right: 30px;
+				z-index: 9999;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				pointer-events: none;
+			}
+			.toast {
+				background: rgba(15, 15, 15, 0.85);
+				backdrop-filter: blur(12px);
+				border: 1px solid rgba(129, 140, 248, 0.3);
+				color: white;
+				padding: 16px 24px;
+				border-radius: 16px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				min-width: 280px;
+				max-width: 400px;
+				animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+				pointer-events: auto;
+			}
+			.toast.fade-out {
+				animation: fadeOut 0.4s ease forwards;
+			}
+			.toast-header {
+				font-weight: 600;
+				color: #818cf8;
+				font-size: 0.9rem;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.toast-body {
+				font-size: 0.95rem;
+				color: #d1d5db;
+				line-height: 1.4;
+			}
+			@keyframes slideIn {
+				from { transform: translateX(100%) scale(0.9); opacity: 0; }
+				to { transform: translateX(0) scale(1); opacity: 1; }
+			}
+			@keyframes fadeOut {
+				to { transform: translateX(100%); opacity: 0; }
+			}
+
+			/* Floating Notification Button */
+			#btn-learning-notifications {
+				position: fixed;
+				top: 30px;
+				right: 30px;
+				width: 54px;
+				height: 54px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #818cf8, #6366f1);
+				border: none;
+				color: white;
+				box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 10000;
+				transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+			}
+
+			#btn-learning-notifications:hover {
+				transform: scale(1.1) translateY(-5px);
+				box-shadow: 0 15px 30px rgba(99, 102, 241, 0.6);
+			}
+
+			#btn-learning-notifications .badge {
+				position: absolute;
+				top: -2px;
+				right: -2px;
+				background: #ef4444;
+				color: white;
+				font-size: 0.7rem;
+				font-weight: 800;
+				padding: 4px 8px;
+				border-radius: 12px;
+				border: 3px solid #0a0a0a;
+				display: none;
+			}
+
+			/* Learning History Panel */
+			#learning-history-panel {
+				position: fixed;
+				top: 100px;
+				right: 30px;
+				width: 380px;
+				max-height: calc(100vh - 150px);
+				background: rgba(15, 15, 15, 0.95);
+				backdrop-filter: blur(20px);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 24px;
+				display: none;
+				flex-direction: column;
+				z-index: 10000;
+				box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+				overflow: hidden;
+				animation: fadeInUp 0.4s ease;
+			}
+
+			#learning-history-panel.active {
+				display: flex;
+			}
+
+			.history-header {
+				padding: 20px 25px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				background: rgba(255,255,255,0.02);
+			}
+
+			.history-header h4 {
+				margin: 0;
+				font-size: 1rem;
+				color: var(--primary);
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+
+			.history-list {
+				flex: 1;
+				overflow-y: auto;
+				padding: 15px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				scrollbar-width: none;
+			}
+			.history-list::-webkit-scrollbar { display: none; }
+
+			.history-item {
+				background: rgba(255, 255, 255, 0.03);
+				padding: 15px;
+				border-radius: 16px;
+				border-left: 4px solid #818cf8;
+				transition: all 0.2s;
+			}
+			.history-item:hover {
+				background: rgba(255, 255, 255, 0.06);
+			}
+
+			.history-item strong {
+				display: block;
+				color: #818cf8;
+				font-size: 0.85rem;
+				margin-bottom: 5px;
+			}
+			.history-item p {
+				margin: 0;
+				font-size: 0.9rem;
+				color: #ccc;
+				line-height: 1.4;
+			}
+
+			/* Custom Toggle Switch */
+			.switch {
+				position: relative;
+				display: inline-block;
+				width: 50px;
+				height: 26px;
+			}
+			.switch input {
+				opacity: 0;
+				width: 0;
+				height: 0;
+			}
+			.slider {
+				position: absolute;
+				cursor: pointer;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: #2a2a2a;
+				transition: .4s;
+				border-radius: 34px;
+				border: 1px solid rgba(255,255,255,0.1);
+			}
+			.slider:before {
+				position: absolute;
+				content: "";
+				height: 18px;
+				width: 18px;
+				left: 4px;
+				bottom: 3px;
+				background-color: white;
+				transition: .4s;
+				border-radius: 50%;
+			}
+			input:checked + .slider {
+				background-color: #10b981;
+			}
+			input:checked + .slider:before {
+				transform: translateX(24px);
+			}
+		</style>
 	</head>
 	<body>
 		<div class="app-wrapper">
@@ -88,8 +296,8 @@
 							<button type="button" class="btn-icon" title="Web search">
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
 							</button>
-							<div class="model-selector" style="background: #2a2a2a; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; color: #ccc; border: 1px solid #333; cursor: pointer;">
-								qwen2:0.5b <svg style="display: inline; vertical-align: middle;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+							<div class="model-selector" id="chat-model-indicator" style="background: #2a2a2a; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; color: #ccc; border: 1px solid #333; cursor: pointer;">
+								<span id="active-model-label">Memuat...</span> <svg style="display: inline; vertical-align: middle;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 							</div>
 							<button type="submit" id="btn-send">
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
@@ -112,19 +320,25 @@
 							<input type="text" id="admin-search" placeholder="Cari pengetahuan..." />
 						</div>
 						<input type="file" id="csv-upload" accept=".csv" style="display: none;" />
-						<button class="btn-secondary" id="btn-trigger-upload">
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-							Impor CSV
-						</button>
+						<div style="display: flex; gap: 10px; align-items: center;">
+							<button class="btn-save" id="btn-bulk-delete" style="display: none; background: #ef4444; padding: 8px 15px; font-size: 0.85rem; border-radius: 8px;">
+								Hapus Terpilih (<span id="selected-count">0</span>)
+							</button>
+							<button class="btn-secondary" id="btn-trigger-upload">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+								Impor CSV
+							</button>
+						</div>
 					</div>
 				</div>
 				<div class="admin-table-container">
 					<table id="admin-table">
 						<thead>
 							<tr>
+								<th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-intents" style="cursor: pointer;"></th>
 								<th>Pola (Pemicu)</th>
 								<th>Variasi Respon</th>
-								<th>Aksi</th>
+								<th style="width: 80px; text-align: center;">Aksi</th>
 							</tr>
 						</thead>
 						<tbody id="admin-table-body">
@@ -177,7 +391,6 @@
 				</div>
 				
 				<div class="settings-container">
-				<div class="settings-container">
 					<div class="personality-grid" id="main-settings-grid">
 						<!-- Card Riwayat -->
 						<div class="job-card" id="card-main-history">
@@ -199,11 +412,11 @@
 						</div>
 
 						<!-- Card Otak Cadangan -->
-						<div class="job-card clickable-card" id="btn-show-ollama">
+						<div class="job-card clickable-card" id="btn-show-brain">
 							<div class="p-icon">🧠</div>
 							<h4>Otak Cadangan</h4>
-							<p>Pilih model Ollama AI untuk fallback.</p>
-							<div class="status-badge" id="current-ollama-badge" style="background: #8b5cf6;">qwen2:0.5b</div>
+							<p>Pilih Ollama (Lokal) atau Gemini (Cloud).</p>
+							<div class="status-badge" id="current-brain-badge" style="background: #8b5cf6;">Ollama</div>
 						</div>
 
 						<!-- Card Auto Learning -->
@@ -215,60 +428,157 @@
 						</div>
 					</div>
 
-					<!-- Ollama Sub-Menu (Hidden by default) -->
-					<div class="personality-section" id="ollama-sub-menu" style="display: none;">
+					<!-- Brain Sub-Menu -->
+					<div class="personality-section" id="brain-sub-menu" style="display: none;">
 						<div class="section-header">
-							<button class="btn-back" id="btn-back-ollama">
+							<button class="btn-back" id="btn-back-brain">
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
 								Kembali
 							</button>
-							<h3>Pilih Model Ollama</h3>
+							<h3>Pengaturan Otak Cadangan</h3>
 						</div>
-						<div class="personality-grid">
-							<div class="personality-card active" data-ollama="qwen2:0.5b">
-								<div class="p-icon">⚡</div>
-								<h4>Qwen2 (0.5b)</h4>
-								<p>Sangat ringan dan cepat. Cocok untuk RAM 8GB.</p>
+						
+						<div class="admin-panel" style="padding: 20px; border: none; background: transparent;">
+							<h4 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text);">Pilih Mesin Utama</h4>
+							<div class="personality-grid" style="margin-bottom: 30px;">
+								<div class="personality-card btn-brain-select active" data-brain="ollama">
+									<div class="p-icon">🦙</div>
+									<h4 style="font-size: 1.1rem;">Ollama (Lokal)</h4>
+									<p style="font-size: 0.95rem;">Jalan di PC sendiri, lebih privat.</p>
+								</div>
+								<div class="personality-card btn-brain-select" data-brain="gemini">
+									<div class="p-icon">✨</div>
+									<h4 style="font-size: 1.1rem;">Gemini (Cloud)</h4>
+									<p style="font-size: 0.95rem;">Sangat cerdas dan super cepat.</p>
+								</div>
 							</div>
-							<div class="personality-card" data-ollama="llama3">
-								<div class="p-icon">🦙</div>
-								<h4>Llama 3</h4>
-								<p>Sangat cerdas tapi berat. Butuh RAM besar.</p>
+
+							<div id="settings-gemini" style="display: none; padding: 20px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border);">
+								<h4 style="font-size: 1.2rem; color: #8b5cf6; margin-bottom: 5px;">🔑 Pengaturan API Gemini</h4>
+								<p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 15px;">Dapatkan API Key secara gratis dari Google AI Studio.</p>
+								<div class="input-group" style="display: flex; gap: 10px;">
+									<input type="password" id="input-gemini-key" placeholder="Paste API Key di sini (AIzaSy...)" style="flex: 1; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 1rem;">
+									<button class="btn-save" id="btn-save-gemini" style="padding: 12px 24px; font-weight: bold; background: #8b5cf6; color: white; border-radius: 8px; font-size: 1rem; border: none; cursor: pointer;">Simpan API Key</button>
+								</div>
 							</div>
-							<div class="personality-card" data-ollama="mistral">
-								<div class="p-icon">🌪️</div>
-								<h4>Mistral</h4>
-								<p>Seimbang performa dan kecepatannya.</p>
+
+							<div id="settings-ollama" style="padding: 25px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid var(--glass); margin-bottom: 30px;">
+								<h4 style="font-size: 1.3rem; color: #10b981; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+									Konfigurasi Ollama
+								</h4>
+
+								<div style="display: flex; flex-direction: column; gap: 20px;">
+									<div class="input-group">
+										<label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Model Default</label>
+										<div style="display: flex; gap: 10px;">
+											<select id="select-default-ollama" style="flex: 1; padding: 14px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: var(--text); font-size: 1rem; outline: none; cursor: pointer;">
+												<option value="">Mendeteksi model di PC...</option>
+											</select>
+										</div>
+									</div>
+
+									<div class="input-group">
+										<label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Ollama API URL</label>
+										<input type="text" id="input-ollama-url" placeholder="http://localhost:11434" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: var(--text);">
+									</div>
+
+									<div class="input-group" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);">
+										<label style="display: block; margin-bottom: 10px; font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Lokasi Model (Portable Path)</label>
+										<div style="display: flex; gap: 10px;">
+											<input type="text" id="input-ollama-path" placeholder="Kosongkan untuk default (C:\Users\...)" style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: #111; color: var(--text); outline: none;">
+											<button id="btn-browse-ollama" title="Pilih Folder" style="background: #333; color: white; border: 1px solid rgba(255,255,255,0.1); padding: 0 15px; border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+												<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+											</button>
+											<button id="btn-sync-ollama" title="Hubungkan Otak" style="background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+												Hubungkan
+											</button>
+										</div>
+										<p style="font-size: 0.8rem; color: #64748b; margin-top: 8px;">Gunakan ini jika Anda memindahkan folder <strong>.ollama/models</strong> ke drive lain.</p>
+									</div>
+
+									<button class="btn-save" id="btn-save-ollama-config" style="width: 100%; padding: 15px; background: #10b981; color: white; border-radius: 12px; font-weight: bold; margin-top: 10px;">Simpan Konfigurasi Ollama</button>
+								</div>
 							</div>
 						</div>
 					</div>
 
 					<!-- Auto Learning Sub-Menu (Hidden by default) -->
 					<div class="personality-section" id="autolearn-sub-menu" style="display: none;">
-						<div class="section-header">
+						<div class="section-header" style="margin-bottom: 40px; border-bottom: 1px solid var(--glass); padding-bottom: 20px;">
 							<button class="btn-back" id="btn-back-autolearn">
-								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
 								Kembali
 							</button>
-							<h3>Latihan Mandiri (Auto Learning)</h3>
+							<h3 style="font-size: 1.6rem; margin-left: 10px;">Latihan Mandiri (Auto Learning)</h3>
 						</div>
-						<div class="admin-panel" style="padding: 20px;">
-							<p style="color: var(--text-dim); margin-bottom: 20px;">Diana akan terus-menerus bertanya kepada Ollama untuk mencari pengetahuan baru selama durasi yang ditentukan.</p>
-							<div class="input-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-								<input type="text" id="input-autolearn-topic" placeholder="Topik Spesifik (Opsional, cth: Fisika Kuantum)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 100%; box-sizing: border-box;">
-								<div style="display: flex; gap: 10px;">
-									<input type="number" id="input-autolearn-mins" value="15" min="1" max="120" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); flex: 1;">
-									<span style="align-self: center; font-weight: bold;">Menit</span>
+
+						<div class="settings-card" style="display: block; width: 95%; max-width: 2000px; margin: 0 auto; padding: 60px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px;">
+							<p style="color: var(--text-dim); font-size: 1.1rem; line-height: 1.6; margin-bottom: 35px; text-align: center;">
+								Diana akan terus-menerus bertanya kepada Ollama untuk mencari pengetahuan baru selama durasi yang ditentukan secara otomatis.
+							</p>
+
+							<div class="input-group" style="display: flex; flex-direction: column; gap: 25px; margin-bottom: 40px;">
+								<div style="display: flex; flex-direction: column; gap: 10px;">
+									<label style="font-size: 0.9rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Topik Spesifik (Opsional)</label>
+									<input type="text" id="input-autolearn-topic" placeholder="Contoh: Fisika Kuantum, Sejarah Indonesia, AI..." style="padding: 16px; font-size: 1.1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.3s;">
+								</div>
+								
+								<div style="display: flex; flex-direction: column; gap: 10px;">
+									<label style="font-size: 0.9rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Pilih Model Ollama</label>
+									<div style="display: flex; gap: 10px;">
+										<select id="select-autolearn-model" style="flex: 1; padding: 16px; font-size: 1.1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); outline: none; cursor: pointer;">
+											<option value="">Mendeteksi model...</option>
+										</select>
+										<button id="btn-run-ollama" title="Jalankan di Terminal" style="background: #2a2a2a; color: var(--primary); border: 1px solid var(--primary); padding: 0 20px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+											<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+											Run
+										</button>
+									</div>
+									<input type="text" id="input-autolearn-custom-model" placeholder="Ketik nama model (cth: mistral, phi3...)" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--primary); background: #1a1a1a; color: var(--text); width: 100%; box-sizing: border-box; outline: none; margin-top: 10px; display: none;">
+									
+									<!-- Fitur Browse Path Baru -->
+									<div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+										<label style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Lokasi Model (Opsional)</label>
+										<div style="display: flex; gap: 8px;">
+											<input type="text" id="input-autolearn-path" placeholder="Default Ollama Path" style="flex: 1; padding: 10px; font-size: 0.9rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #111; color: var(--text); outline: none;">
+											<button id="btn-browse-autolearn" title="Pilih Folder" style="background: #333; color: white; border: 1px solid rgba(255,255,255,0.1); padding: 0 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+												<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<div style="display: flex; flex-direction: column; gap: 10px;">
+									<label style="font-size: 0.9rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Durasi Latihan</label>
+									<div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+										<div id="duration-input-wrapper" style="display: flex; gap: 10px; align-items: center;">
+											<input type="number" id="input-autolearn-mins" value="15" min="1" max="120" style="padding: 16px; font-size: 1.2rem; font-weight: bold; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--primary); width: 100px; text-align: center; outline: none;">
+											<span style="font-size: 1.2rem; font-weight: 600; color: var(--text);">Menit</span>
+										</div>
+										
+										<div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="document.getElementById('check-infinite').click()">
+											<input type="checkbox" id="check-infinite" style="width: 20px; height: 20px; cursor: pointer;">
+											<span style="font-size: 0.9rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 1px;">Tanpa Batas Waktu</span>
+										</div>
+									</div>
 								</div>
 							</div>
-							<div style="display: flex; gap: 10px;">
-								<button class="btn-save" id="btn-start-autolearn" style="flex: 1; padding: 12px; font-weight: bold; background: #10b981; color: white;">Mulai Latihan 🚀</button>
-								<button class="btn-save" id="btn-stop-autolearn" style="flex: 1; padding: 12px; font-weight: bold; background: #ef4444; color: white; display: none;">Hentikan 🛑</button>
+
+							<div style="display: flex; flex-direction: column; gap: 15px;">
+								<button class="btn-save" id="btn-start-autolearn" style="width: 100%; padding: 20px; font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 16px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); transition: all 0.3s;">Mulai Latihan 🚀</button>
+								<button class="btn-save" id="btn-stop-autolearn" style="width: 100%; padding: 20px; font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-radius: 16px; display: none;">Hentikan Latihan 🛑</button>
 							</div>
-							<div id="autolearn-status-text" style="margin-top: 15px; text-align: center; font-weight: bold; color: #10b981; display: none;">Sedang Berlatih... Sisa Waktu: --:--</div>
-							<div id="autolearn-report" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; display: none;">
-								<h4 style="margin-bottom: 10px; color: var(--text);">Laporan Sesi Ini:</h4>
-								<ul id="autolearn-report-list" style="color: var(--text-dim); font-size: 0.9rem; padding-left: 20px; max-height: 150px; overflow-y: auto;">
+
+							<div id="autolearn-status-text" style="margin-top: 25px; text-align: center; font-size: 1.1rem; font-weight: bold; color: #10b981; display: none; letter-spacing: 0.5px;">
+								<span class="pulse" style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; margin-right: 10px;"></span>
+								Sedang Berlatih... Sisa Waktu: --:--
+							</div>
+
+							<div id="autolearn-report" style="margin-top: 35px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; display: none;">
+								<h4 style="margin-bottom: 15px; color: var(--primary); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Laporan Sinkronisasi:</h4>
+								<ul id="autolearn-report-list" style="color: var(--text-dim); font-size: 1rem; line-height: 1.5; padding-left: 20px; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
 								</ul>
 							</div>
 						</div>
@@ -276,6 +586,35 @@
 				</div>
 			</main>
 		</div>
+
+		<!-- Global Floating Notification Center -->
+		<button id="btn-learning-notifications" title="Pusat Pembelajaran Diana">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+			<span class="badge" id="learning-badge">0</span>
+		</button>
+
+		<div id="learning-history-panel">
+			<div class="history-header">
+				<div style="display: flex; flex-direction: column; gap: 4px;">
+					<h4>Aktivitas Diana</h4>
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<label class="switch" style="transform: scale(0.65); transform-origin: left;">
+							<input type="checkbox" id="toggle-notifications-inline" checked>
+							<span class="slider"></span>
+						</label>
+						<span style="font-size: 0.7rem; color: #555; text-transform: uppercase;">Notifikasi</span>
+					</div>
+				</div>
+				<button id="btn-close-history" style="background: transparent; border: none; color: #555; cursor: pointer; padding: 10px;">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+				</button>
+			</div>
+			<div class="history-list" id="learning-history-list">
+				<div style="text-align: center; padding: 40px; color: #555;">Belum ada data pembelajaran baru.</div>
+			</div>
+		</div>
+
+		<div id="toast-container-global"></div>
 
 
 
@@ -363,24 +702,88 @@
 
 			// Settings Logic
 			async function fetchSettings() {
-				// Kita butuh endpoint baru atau bisa ambil dari /status jika kita update
-				// Untuk sementara kita biarkan user klik kartu untuk mengaktifkan
-				// Di dunia nyata, kita fetch dari DB dulu mana yang aktif
+				try {
+					const res = await fetch('http://127.0.0.1:5000/settings');
+					const data = await res.json();
+					
+					// Populate Inputs
+					document.getElementById('input-gemini-key').value = data.gemini_api_key || '';
+					document.getElementById('input-ollama-url').value = data.ollama_api_url || 'http://localhost:11434';
+					document.getElementById('input-ollama-path').value = data.ollama_models_path || '';
+					document.getElementById('input-history-days').value = data.history_days || '7';
+					
+					// Set Active Brain Badge
+					const brainBadge = document.getElementById('current-brain-badge');
+					if (data.fallback_brain === 'gemini') {
+						brainBadge.textContent = 'Gemini';
+						document.querySelector('[data-brain="gemini"]').classList.add('active');
+						document.querySelector('[data-brain="ollama"]').classList.remove('active');
+						document.getElementById('settings-gemini').style.display = 'block';
+						document.getElementById('settings-ollama').style.display = 'none';
+					} else {
+						brainBadge.textContent = 'Ollama';
+						document.querySelector('[data-brain="ollama"]').classList.add('active');
+						document.querySelector('[data-brain="gemini"]').classList.remove('active');
+						document.getElementById('settings-ollama').style.display = 'block';
+						document.getElementById('settings-gemini').style.display = 'none';
+					}
+
+					// Set Active Ollama Model in Dropdown (Dynamically selected)
+					// Model dropdown diisi oleh fetchOllamaModels(), bukan di sini
+					// Simpan nilai aktif dari server supaya bisa dipakai saat dropdown terisi
+					window._savedOllamaModel = data.ollama_model || '';
+
+				} catch (e) { console.error("Gagal mengambil pengaturan:", e); }
 			}
+
+			// Browse Ollama Models Path
+			document.getElementById('btn-browse-ollama').addEventListener('click', async () => {
+				try {
+					const res = await fetch('http://127.0.0.1:5000/settings/browse_folder');
+					const data = await res.json();
+					if (data.success) {
+						document.getElementById('input-ollama-path').value = data.path;
+					} else if (data.message) {
+						console.log(data.message);
+					}
+				} catch (e) { alert("Gagal membuka pemilih folder."); }
+			});
+
+			// Save Ollama Config
+			document.getElementById('btn-save-ollama-config').addEventListener('click', async () => {
+				const url = document.getElementById('input-ollama-url').value;
+				const path = document.getElementById('input-ollama-path').value;
+				try {
+					const res = await fetch('http://127.0.0.1:5000/settings', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ 
+							ollama_api_url: url,
+							ollama_models_path: path
+						})
+					});
+					const data = await res.json();
+					alert(data.message);
+					fetchSettings(); // Refresh UI
+					fetchOllamaModels(); // Refresh available models list
+				} catch (e) { alert("Gagal menyimpan konfigurasi."); }
+			});
 
 			// NAVIGATION CARDS LOGIC
 			const mainSettingsGrid = document.getElementById('main-settings-grid');
 			
-			const btnShowOllama = document.getElementById('btn-show-ollama');
-			const btnBackOllama = document.getElementById('btn-back-ollama');
-			const ollamaSubMenu = document.getElementById('ollama-sub-menu');			btnShowOllama.addEventListener('click', () => {
+			const btnShowBrain = document.getElementById('btn-show-brain');
+			const btnBackBrain = document.getElementById('btn-back-brain');
+			const brainSubMenu = document.getElementById('brain-sub-menu');
+			
+			btnShowBrain.addEventListener('click', () => {
 				mainSettingsGrid.style.display = 'none';
-				ollamaSubMenu.style.display = 'block';
+				brainSubMenu.style.display = 'block';
 			});
 
-			btnBackOllama.addEventListener('click', () => {
+			btnBackBrain.addEventListener('click', () => {
 				mainSettingsGrid.style.display = 'grid';
-				ollamaSubMenu.style.display = 'none';
+				brainSubMenu.style.display = 'none';
 			});
 
 			const btnShowAutolearn = document.getElementById('btn-show-autolearn');
@@ -397,11 +800,61 @@
 				autolearnSubMenu.style.display = 'none';
 			});
 
-			// Ollama Logic (Update Badge)
-			const ollamaBadge = document.getElementById('current-ollama-badge');
-			document.querySelectorAll('#ollama-sub-menu .personality-card').forEach(card => {
-				card.addEventListener('click', async () => {
-					const m = card.getAttribute('data-ollama');
+			// Brain Selection Logic
+			const brainBadge = document.getElementById('current-brain-badge');
+			const settingsGemini = document.getElementById('settings-gemini');
+			const settingsOllama = document.getElementById('settings-ollama');
+			
+			document.querySelectorAll('.btn-brain-select').forEach(btn => {
+				btn.addEventListener('click', async () => {
+					const brain = btn.getAttribute('data-brain');
+					
+					// Update UI Switch
+					document.querySelectorAll('.btn-brain-select').forEach(b => b.classList.remove('active'));
+					btn.classList.add('active');
+					
+					// Toggle Settings View
+					if (brain === 'gemini') {
+						settingsGemini.style.display = 'block';
+						settingsOllama.style.display = 'none';
+						brainBadge.textContent = 'Gemini';
+					} else {
+						settingsGemini.style.display = 'none';
+						settingsOllama.style.display = 'block';
+						brainBadge.textContent = 'Ollama';
+					}
+					
+					// Save to backend
+					try {
+						await fetch('http://127.0.0.1:5000/settings', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ fallback_brain: brain })
+						});
+					} catch (err) { console.error("Gagal update fallback brain."); }
+				});
+			});
+
+			// Save Gemini Key
+			document.getElementById('btn-save-gemini').addEventListener('click', async () => {
+				const key = document.getElementById('input-gemini-key').value;
+				try {
+					const res = await fetch('http://127.0.0.1:5000/settings', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ gemini_api_key: key })
+					});
+					const data = await res.json();
+					if (data.success) alert("API Key berhasil disimpan!");
+				} catch (err) { alert("Gagal menyimpan API Key."); }
+			});
+
+			// Ollama Logic (Update Default Model)
+			const selectDefaultOllama = document.getElementById('select-default-ollama');
+			
+			if (selectDefaultOllama) {
+				selectDefaultOllama.addEventListener('change', async () => {
+					const m = selectDefaultOllama.value;
 					try {
 						const res = await fetch('http://127.0.0.1:5000/settings', {
 							method: 'POST',
@@ -409,15 +862,17 @@
 							body: JSON.stringify({ ollama_model: m })
 						});
 						if (res.ok) {
-							document.querySelectorAll('#ollama-sub-menu .personality-card').forEach(c => c.classList.remove('active'));
-							card.classList.add('active');
-							ollamaBadge.textContent = m;
+							showToast("Otak Cadangan Diperbarui", `Diana sekarang menggunakan model <strong>${m}</strong> sebagai cadangan.`);
+							// Update label di footer chat secara real-time
+							const lbl = document.getElementById('active-model-label');
+							if (lbl) lbl.textContent = m;
+							window._savedOllamaModel = m;
 						}
 					} catch (err) {
 						alert("Gagal mengubah model Ollama.");
 					}
 				});
-			});
+			}
 
 			// Auto Learning Logic
 			const btnStartLearn = document.getElementById('btn-start-autolearn');
@@ -426,7 +881,95 @@
 			const badgeAutolearn = document.getElementById('badge-autolearn');
 			const inputLearnMins = document.getElementById('input-autolearn-mins');
 			const inputLearnTopic = document.getElementById('input-autolearn-topic');
+			const selectLearnModel = document.getElementById('select-autolearn-model');
+			const inputLearnCustomModel = document.getElementById('input-autolearn-custom-model');
+			const inputLearnPath = document.getElementById('input-autolearn-path');
+			const btnBrowseAutolearn = document.getElementById('btn-browse-autolearn');
+			const btnSyncOllama = document.getElementById('btn-sync-ollama');
+			const inputOllamaPath = document.getElementById('input-ollama-path');
+
+			// Show/hide custom model input
+			selectLearnModel.addEventListener('change', () => {
+				if (selectLearnModel.value === 'custom') {
+					inputLearnCustomModel.style.display = 'block';
+				} else {
+					inputLearnCustomModel.style.display = 'none';
+				}
+			});
 			let autolearnInterval = null;
+			let notificationsEnabled = true;
+			let newItemsCount = 0;
+			const learnedItemsCache = new Set();
+
+			// Toggle Notification Panel
+			const btnHistory = document.getElementById('btn-learning-notifications');
+			const panelHistory = document.getElementById('learning-history-panel');
+			const badgeHistory = document.getElementById('learning-badge');
+			const listHistory = document.getElementById('learning-history-list');
+
+			btnHistory.addEventListener('click', () => {
+				panelHistory.classList.toggle('active');
+				newItemsCount = 0;
+				badgeHistory.style.display = 'none';
+			});
+
+			document.getElementById('btn-close-history').addEventListener('click', () => {
+				panelHistory.classList.remove('active');
+			});
+
+			document.getElementById('toggle-notifications-inline').addEventListener('change', (e) => {
+				notificationsEnabled = e.target.checked;
+			});
+
+			function showToast(title, message, itemData = null) {
+				if (!notificationsEnabled) return;
+				
+				const container = document.getElementById('toast-container-global');
+				const toast = document.createElement('div');
+				toast.className = 'toast';
+				toast.innerHTML = `
+					<div class="toast-header">
+						<span>✨</span>
+						<span>${title}</span>
+					</div>
+					<div class="toast-body">${message}</div>
+				`;
+				
+				container.appendChild(toast);
+
+				// Update history panel
+				if (itemData) {
+					if (learnedItemsCache.size === 1) listHistory.innerHTML = ''; // Clear empty msg
+					const historyItem = document.createElement('div');
+					historyItem.className = 'history-item';
+					historyItem.innerHTML = `
+						<strong>Pola Baru Terdeteksi</strong>
+						<p>${itemData.tanya}</p>
+						<div style="font-size: 0.75rem; color: #555; margin-top: 8px;">Respon: ${itemData.jawab.substring(0, 60)}...</div>
+					`;
+					listHistory.insertBefore(historyItem, listHistory.firstChild);
+
+					newItemsCount++;
+					badgeHistory.textContent = newItemsCount;
+					badgeHistory.style.display = 'block';
+				}
+				
+				// Auto remove
+				setTimeout(() => {
+					toast.classList.add('fade-out');
+					setTimeout(() => toast.remove(), 400);
+				}, 4000);
+			}
+
+			const checkInfinite = document.getElementById('check-infinite');
+			const durationWrapper = document.getElementById('duration-input-wrapper');
+
+			if (checkInfinite) {
+				checkInfinite.addEventListener('change', () => {
+					durationWrapper.style.opacity = checkInfinite.checked ? '0.3' : '1';
+					durationWrapper.style.pointerEvents = checkInfinite.checked ? 'none' : 'auto';
+				});
+			}
 
 			async function updateAutolearnStatus() {
 				try {
@@ -436,44 +979,85 @@
 					const reportDiv = document.getElementById('autolearn-report');
 					const reportList = document.getElementById('autolearn-report-list');
 					
-					if (data.learned_items && data.learned_items.length > 0) {
-						reportDiv.style.display = 'block';
-						reportList.innerHTML = data.learned_items.map(item => `<li style="margin-bottom: 5px;"><strong>${item.tanya}</strong></li>`).join('');
-					} else {
-						reportDiv.style.display = 'none';
-					}
-
-					if (data.status === 'active') {
+					if (data.is_learning) {
 						btnStartLearn.style.display = 'none';
 						btnStopLearn.style.display = 'block';
 						statusText.style.display = 'block';
-						statusText.textContent = `Sedang Berlatih... Sisa Waktu: ${data.time_remaining}`;
-						badgeAutolearn.textContent = 'Aktif ⚡';
-						badgeAutolearn.style.background = '#10b981';
+						badgeAutolearn.textContent = "Berjalan";
+						badgeAutolearn.style.background = "#10b981";
+						
+						if (data.time_remaining === "Infinite") {
+							statusText.innerHTML = '<span class="pulse" style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; margin-right: 10px;"></span>Sedang Berlatih... Mode Tanpa Batas';
+						} else {
+							statusText.innerHTML = `<span class="pulse" style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; margin-right: 10px;"></span>Sedang Berlatih... Sisa Waktu: ${data.time_remaining}`;
+						}
+						
+						if (!autolearnInterval) {
+							autolearnInterval = setInterval(updateAutolearnStatus, 2000);
+						}
 					} else {
 						btnStartLearn.style.display = 'block';
 						btnStopLearn.style.display = 'none';
 						statusText.style.display = 'none';
-						badgeAutolearn.textContent = 'Mati';
-						badgeAutolearn.style.background = '#64748b';
-						if (autolearnInterval) clearInterval(autolearnInterval);
+						badgeAutolearn.textContent = "Mati";
+						badgeAutolearn.style.background = "#64748b";
+						if (autolearnInterval) {
+							clearInterval(autolearnInterval);
+							autolearnInterval = null;
+						}
+					}
+
+					// Update Report
+					if (data.learned_items && data.learned_items.length > 0) {
+						reportDiv.style.display = 'block';
+						reportList.innerHTML = data.learned_items.map(item => 
+							`<li style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+								<strong>Q:</strong> ${item.tanya} <br> 
+								<span style="font-size:0.85rem; color:#818cf8;">A: ${item.jawab}</span>
+							</li>`
+						).reverse().join('');
+
+						// Show notifications for NEW items
+						data.learned_items.forEach(item => {
+							if (!learnedItemsCache.has(item.tanya)) {
+								learnedItemsCache.add(item.tanya);
+								showToast("Diana Sedang Belajar", `Menyerap ilmu: <strong>${item.tanya}</strong>`, item);
+							}
+						});
 					}
 				} catch (e) { console.error(e); }
 			}
 
 			btnStartLearn.addEventListener('click', async () => {
-				const mins = inputLearnMins.value;
 				const topic = inputLearnTopic.value;
+				let mins = parseInt(inputLearnMins.value);
+				
+				if (checkInfinite && checkInfinite.checked) {
+					mins = 0; // 0 di backend berarti infinite
+				}
+				
+				let modelName = selectLearnModel.value;
+				if (modelName === 'custom') {
+					modelName = inputLearnCustomModel.value.trim();
+					if (!modelName) {
+						alert("Silakan masukkan nama model custom Anda.");
+						return;
+					}
+				}
+
 				try {
 					const res = await fetch('http://127.0.0.1:5000/auto_learning/start', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ minutes: parseInt(mins), topic: topic })
+						body: JSON.stringify({ 
+							minutes: mins, 
+							topic: topic,
+							model_name: modelName
+						})
 					});
 					const data = await res.json();
 					if (data.success) {
 						updateAutolearnStatus();
-						autolearnInterval = setInterval(updateAutolearnStatus, 1000);
 					} else {
 						alert(data.message);
 					}
@@ -483,13 +1067,112 @@
 			btnStopLearn.addEventListener('click', async () => {
 				try {
 					const res = await fetch('http://127.0.0.1:5000/auto_learning/stop', { method: 'POST' });
-					await res.json();
-					updateAutolearnStatus();
+					const data = await res.json();
+					if (data.success) {
+						updateAutolearnStatus();
+					}
 				} catch (e) { alert("Gagal menghentikan latihan."); }
 			});
+
+			// Browse logic for Auto Learn
+			btnBrowseAutolearn.addEventListener('click', async () => {
+				try {
+					const res = await fetch('http://127.0.0.1:5000/settings/browse_folder');
+					const data = await res.json();
+					if (data.success) {
+						inputLearnPath.value = data.path;
+						inputOllamaPath.value = data.path; // Sinkronkan ke pengaturan utama juga
+						// Update global setting as well
+						await fetch('http://127.0.0.1:5000/settings', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ ollama_models_path: data.path })
+						});
+						showToast("Lokasi Model Disetel", `Diana sekarang diarahkan ke: ${data.path}`);
+						fetchOllamaModels(); // Refresh list model dari folder baru
+					}
+				} catch (e) { alert("Gagal membuka folder browser."); }
+			});
+
+			// Manual Sync Logic (User Directed)
+			btnSyncOllama.addEventListener('click', async () => {
+				const path = inputOllamaPath.value.trim();
+				if (!path) {
+					alert("Silakan masukkan atau pilih folder model terlebih dahulu.");
+					return;
+				}
+
+				btnSyncOllama.innerHTML = 'Menghubungkan...';
+				btnSyncOllama.disabled = true;
+
+				try {
+					const res = await fetch('http://127.0.0.1:5000/ollama/sync_models', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ path: path })
+					});
+					const data = await res.json();
+					
+					if (data.success) {
+						showToast("Berhasil Terhubung!", data.message);
+						fetchOllamaModels(); // Segarkan daftar model
+					} else {
+						alert("Gagal: " + data.message);
+					}
+				} catch (e) {
+					alert("Terjadi kesalahan saat menghubungkan otak cadangan.");
+				} finally {
+					btnSyncOllama.innerHTML = `
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+						Hubungkan
+					`;
+					btnSyncOllama.disabled = false;
+				}
+			});
 			
+			async function fetchOllamaModels() {
+				try {
+					const res = await fetch('http://127.0.0.1:5000/ollama/models');
+					const data = await res.json();
+					if (data.models && data.models.length > 0) {
+						// Ambil model yang sedang aktif dari server
+						const statusRes = await fetch('http://127.0.0.1:5000/status');
+						const statusData = await statusRes.json();
+						const activeModel = statusData.settings?.ollama_model || window._savedOllamaModel || data.models[0];
+
+						const optionsHtml = data.models.map(m => 
+							`<option value="${m}" ${m === activeModel ? 'selected' : ''}>${m}</option>`
+						).join('');
+						
+						// Update dropdown Latihan Mandiri
+						const currentLearnVal = selectLearnModel.value;
+						selectLearnModel.innerHTML = optionsHtml + '<option value="custom">-- Gunakan Model Custom --</option>';
+						if (data.models.includes(currentLearnVal)) selectLearnModel.value = currentLearnVal;
+
+						// Update dropdown Otak Cadangan
+						if (selectDefaultOllama) {
+							selectDefaultOllama.innerHTML = optionsHtml;
+						}
+
+						// Update label model di chat footer
+						const activeModelLabel = document.getElementById('active-model-label');
+						if (activeModelLabel) {
+							activeModelLabel.textContent = activeModel || data.models[0];
+						}
+					} else {
+						const noModelMsg = '<option value="">Tidak ada model terdeteksi</option><option value="custom">-- Gunakan Model Custom --</option>';
+						selectLearnModel.innerHTML = noModelMsg;
+						if (selectDefaultOllama) selectDefaultOllama.innerHTML = noModelMsg;
+						// Update label
+						const activeModelLabel = document.getElementById('active-model-label');
+						if (activeModelLabel) activeModelLabel.textContent = 'Tidak ada model';
+					}
+				} catch (e) { console.error("Gagal mengambil daftar model Ollama:", e); }
+			}
+
 			// Initial status check
 			updateAutolearnStatus();
+			fetchOllamaModels();
 
 			// Save History Days
 			document.getElementById('btn-save-history').addEventListener('click', async () => {
@@ -511,34 +1194,108 @@
 			let allIntents = [];
 			const adminSearch = document.getElementById('admin-search');
 
+			// Run Ollama Model in CMD
+			document.getElementById('btn-run-ollama').addEventListener('click', async () => {
+				let modelName = selectLearnModel.value;
+				if (modelName === 'custom') {
+					modelName = inputLearnCustomModel.value.trim();
+					if (!modelName) {
+						alert("Silakan masukkan nama model custom.");
+						return;
+					}
+				}
+
+				try {
+					const res = await fetch('http://127.0.0.1:5000/ollama/run', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ model_name: modelName })
+					});
+					const data = await res.json();
+					if (data.success) {
+						console.log(data.message);
+					} else {
+						alert(data.message);
+					}
+				} catch (e) { alert("Gagal menjalankan Ollama."); }
+			});
+
 			async function fetchIntents() {
 				const tbody = document.getElementById('admin-table-body');
-				tbody.innerHTML = '<tr><td colspan="3">Memuat data...</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="4">Memuat data...</td></tr>';
 				
 				try {
 					const res = await fetch('http://127.0.0.1:5000/intents');
 					const data = await res.json();
 					allIntents = data.intents;
+					selectedIntents.clear();
+					updateBulkDeleteUI();
 					renderTable(allIntents);
 				} catch (err) {
-					tbody.innerHTML = '<tr><td colspan="3">Gagal memuat data pengetahuan.</td></tr>';
+					tbody.innerHTML = '<tr><td colspan="4">Gagal memuat data pengetahuan.</td></tr>';
 				}
 			}
+
+			const selectedIntents = new Set();
+			const btnBulkDelete = document.getElementById('btn-bulk-delete');
+			const selectedCountSpan = document.getElementById('selected-count');
+			const selectAllCheckbox = document.getElementById('select-all-intents');
+
+			function updateBulkDeleteUI() {
+				if (selectedIntents.size > 0) {
+					btnBulkDelete.style.display = 'block';
+					selectedCountSpan.textContent = selectedIntents.size;
+				} else {
+					btnBulkDelete.style.display = 'none';
+				}
+				selectAllCheckbox.checked = selectedIntents.size > 0 && selectedIntents.size === allIntents.length;
+			}
+
+			selectAllCheckbox.addEventListener('change', () => {
+				if (selectAllCheckbox.checked) {
+					allIntents.forEach(item => selectedIntents.add(item.pattern));
+				} else {
+					selectedIntents.clear();
+				}
+				renderTable(allIntents);
+				updateBulkDeleteUI();
+			});
+
+			btnBulkDelete.addEventListener('click', async () => {
+				if (!confirm(`Hapus ${selectedIntents.size} pengetahuan terpilih?`)) return;
+				
+				try {
+					const res = await fetch('http://127.0.0.1:5000/intents/delete_bulk', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ patterns: Array.from(selectedIntents) })
+					});
+					const data = await res.json();
+					if (data.success) {
+						fetchIntents();
+					}
+				} catch (err) {
+					alert("Gagal menghapus data secara massal.");
+				}
+			});
 
 			function renderTable(intents) {
 				const tbody = document.getElementById('admin-table-body');
 				tbody.innerHTML = '';
 				
 				if (intents.length === 0) {
-					tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-dim);">Data tidak ditemukan.</td></tr>';
+					tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-dim);">Data tidak ditemukan.</td></tr>';
 					return;
 				}
 
 				intents.forEach(item => {
 					const tr = document.createElement('tr');
+					if (selectedIntents.has(item.pattern)) tr.style.background = 'rgba(129, 140, 248, 0.05)';
+					
 					const responsesHtml = item.responses.map(r => `<span>${r}</span>`).join('');
 					
 					tr.innerHTML = `
+						<td style="text-align: center;"><input type="checkbox" class="intent-checkbox" data-pattern="${item.pattern}" ${selectedIntents.has(item.pattern) ? 'checked' : ''} style="cursor: pointer;"></td>
 						<td style="font-family: monospace; color: #818cf8;">${item.pattern}</td>
 						<td><div class="responses-list">${responsesHtml}</div></td>
 						<td style="text-align: center;">
@@ -550,7 +1307,18 @@
 					tbody.appendChild(tr);
 				});
 
-				// Add event listeners to delete buttons
+				// Add event listeners
+				document.querySelectorAll('.intent-checkbox').forEach(cb => {
+					cb.addEventListener('change', () => {
+						const pattern = cb.getAttribute('data-pattern');
+						if (cb.checked) selectedIntents.add(pattern);
+						else selectedIntents.delete(pattern);
+						updateBulkDeleteUI();
+						// Highlight row
+						cb.closest('tr').style.background = cb.checked ? 'rgba(129, 140, 248, 0.05)' : 'transparent';
+					});
+				});
+
 				document.querySelectorAll('.btn-delete').forEach(btn => {
 					btn.addEventListener('click', () => deleteIntent(btn.getAttribute('data-pattern')));
 				});

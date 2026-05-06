@@ -1,33 +1,57 @@
 import threading
 import time
+import re
 from database.db_manager import add_new_intent, get_setting, update_setting
-from services.ollama_service import ask_ollama
+from services.ollama_service import ask_ollama, get_first_available_model
+import services.translation_service as translator
 
 learning_thread = None
 is_learning = False
 end_time = 0
 learned_items = []
+active_model = ""
+
+def fix_typos(text, model, base_url):
+    """Menggunakan AI untuk memperbaiki typo dalam teks Bahasa Indonesia."""
+    prompt = f"Perbaiki typo atau kesalahan ejaan dalam kalimat Bahasa Indonesia berikut agar menjadi baku dan benar. Jangan berikan penjelasan, langsung berikan hasil perbaikannya saja:\n\n'{text}'"
+    system = "Anda adalah sistem pemeriksa ejaan (spell checker) Bahasa Indonesia yang sangat akurat."
+    try:
+        corrected = ask_ollama(prompt, model=model, base_url=base_url, system=system)
+        if corrected and len(corrected.strip()) > 0:
+            # Bersihkan jika AI memberikan tanda kutip atau embel-embel
+            return corrected.strip().replace('"', '').replace("'", "")
+    except:
+        pass
+    return text
 
 def learning_loop(duration_minutes, model_name, topic=""):
     global is_learning, end_time, learned_items
-    end_time = time.time() + (duration_minutes * 60)
+    
+    # Jika duration_minutes <= 0, maka dianggap tanpa batas waktu (Infinite Mode)
+    if duration_minutes > 0:
+        end_time = time.time() + (duration_minutes * 60)
+        mode_text = f"{duration_minutes} menit"
+    else:
+        end_time = None
+        mode_text = "Tanpa Batas Waktu (Manual Stop)"
     
     topic_instruction = f"KHUSUS tentang topik '{topic}'" if topic else "seperti fakta sains, sejarah, atau teknologi"
     
-    # Prompt Generator dengan Gaya Diana (Pragmata)
+    # Prompt Generator Formal & Objektif (English-First for better quality)
     system_prompt = (
-        f"Anda adalah Diana, asisten android futuristik yang sangat cerdas dan tenang. "
-        f"Tugas Anda adalah merangkum satu pengetahuan fundamental tentang {topic_instruction} "
-        f"untuk diintegrasikan ke dalam database masa depan.\n\n"
-        "VARIASI GAYA (Pilih salah satu):\n"
-        "1. ANALISIS DATA: 'Berdasarkan data yang saya kumpulkan, [Konsep] adalah...'\n"
-        "2. PENGAMATAN: 'Dalam pengamatan saya, [Konsep] memiliki pola...'\n"
-        "3. SINKRONISASI: 'Hasil sinkronisasi informasi menunjukkan bahwa [Konsep]...'\n\n"
-        "ATURAN KETAT:\n"
-        "- Jawaban harus ditulis secara TENANG, CERDAS, dan FUTURISTIK.\n"
-        "- Gunakan Bahasa Indonesia yang sopan (gunakan 'Anda').\n"
-        "- JANGAN gunakan gaya Jinx (jangan ada tawa atau ledakan).\n"
-        "- Format harus tetap TANYA: [pertanyaan] dan JAWAB: [jawaban]."
+        f"You are a professional knowledge extraction system. "
+        f"Your task is to provide fundamental facts about {topic_instruction} "
+        f"to be stored in a knowledge database.\n\n"
+        "STYLE GUIDELINES:\n"
+        "- Use ONLY English (to ensure maximum accuracy and natural phrasing).\n"
+        "- Write questions as a NATURAL HUMAN would ask them.\n"
+        "- Provide ONLY the core factual answer. NO introductory phrases (like 'Known as', 'Usually described as', etc).\n"
+        "- Start the answer DIRECTLY with the subject or the fact itself.\n"
+        "- Avoid first-person pronouns, meta-commentary, and futuristic persona elements.\n"
+        "- Be as concise and professional as an encyclopedia entry.\n\n"
+        "STRICT RULES:\n"
+        "- Prioritize scientific or historical accuracy.\n"
+        "- Format per item: TANYA: [natural question] JAWAB: [concise direct answer]."
     )
 
     # Prompt Validator
@@ -39,37 +63,52 @@ def learning_loop(duration_minutes, model_name, topic=""):
     )
     
     topic_msg = f" dengan fokus topik: {topic}" if topic else ""
-    print(f"[Auto Learning] Memulai latihan mandiri secara PROFESIONAL selama {duration_minutes} menit dengan model {model_name}{topic_msg}.")
+    print(f"[Auto Learning] Memulai latihan mandiri secara PROFESIONAL selama {mode_text} dengan model {model_name}{topic_msg}.")
     
-    while is_learning and time.time() < end_time:
+    while is_learning:
+        # Cek batas waktu jika bukan mode infinite
+        if end_time and time.time() >= end_time:
+            break
+            
         try:
-            print("[Auto Learning] Mencari pengetahuan (Mode Cepat & Akurat)...")
-            # Prompt yang menyuruh AI memvalidasi dirinya sendiri dalam satu langkah
+            print("[Auto Learning] Mencari pengetahuan (Mode Turbo Batch)...")
+            # English User Query for better model response
             user_query = (
-                f"Berikan 1 pengetahuan dasar tentang {topic if topic else 'hal bermanfaat'}. "
-                "SYARAT: Pastikan fakta ini 100% akurat secara ilmiah/faktual. Jika Anda tidak yakin, berikan fakta lain yang lebih pasti. "
-                "Format wajib TANYA: [pertanyaan] JAWAB: [jawaban]. Singkat saja!"
+                f"Provide 5 different fundamental facts about {topic if topic else 'useful general knowledge'}. "
+                "REQUIREMENT: Facts must be 100% accurate. Write questions like a curious human. "
+                "Format: TANYA: [question] JAWAB: [answer]. "
+                "Separate each item with a newline. Go straight to the content."
             )
             
-            res = ask_ollama(user_query, model=model_name, system=system_prompt, options={"num_predict": 120})
+            base_url = get_setting('ollama_api_url', 'http://localhost:11434')
+            res = ask_ollama(user_query, model=model_name, system=system_prompt, options={"num_predict": 1000}, base_url=base_url)
             
             if res:
-                res_upper = res.upper()
-                if "TANYA:" in res_upper and "JAWAB:" in res_upper:
-                    tanya_idx = res_upper.find("TANYA:")
-                    jawab_idx = res_upper.find("JAWAB:")
-                    
-                    tanya = res[tanya_idx+6:jawab_idx].strip().replace("**", "").replace("*", "")
-                    jawab = res[jawab_idx+6:].strip().replace("**", "").replace("*", "")
-                    
-                    if tanya and jawab:
-                        # Langsung simpan tanpa validasi kedua (Ngebut Mode)
-                        add_new_intent(tanya, jawab)
-                        learned_items.append({"tanya": tanya, "jawab": jawab})
-                        update_setting('last_learned_topic', f"{tanya} | {jawab}")
-                        print(f"[Auto Learning] TERSIMPAN: {tanya[:50]}...")
+                # Menggunakan Regex untuk menangkap semua blok TANYA dan JAWAB
+                blocks = re.findall(r"(?:TANYA|Pertanyaan):?\s*(.*?)\s*(?:JAWAB|Jawaban):?\s*(.*?)(?=(?:TANYA|Pertanyaan)|$)", res, re.DOTALL | re.IGNORECASE)
+                
+                if blocks:
+                    for tanya, jawab in blocks:
+                        t_clean = tanya.strip().replace("**", "").replace("*", "")
+                        j_clean = jawab.strip().replace("**", "").replace("*", "")
+                        
+                        if t_clean and j_clean:
+                            # Terjemahkan ke Indonesia sebelum disimpan agar hasil di tabel "Otak" luwes
+                            print(f"[Auto Learning] Menerjemahkan & Memperbaiki: {t_clean[:30]}...")
+                            t_id = translator.translate(t_clean, target_lang='id', source_lang='en')
+                            j_id = translator.translate(j_clean, target_lang='id', source_lang='en')
+                            
+                            # Koreksi Typo otomatis (Self-Correction)
+                            base_url = get_setting('ollama_api_url', 'http://localhost:11434')
+                            t_id = fix_typos(t_id, model_name, base_url)
+                            j_id = fix_typos(j_id, model_name, base_url)
+                            
+                            add_new_intent(t_id, j_id)
+                            learned_items.append({"tanya": t_id, "jawab": j_id})
+                            update_setting('last_learned_topic', f"{t_id} | {j_id}")
+                            print(f"[Auto Learning] TERSIMPAN: {t_id[:50]}...")
                 else:
-                    print("[Auto Learning] Format tidak pas, mencoba lagi...")
+                    print("[Auto Learning] Format tidak pas atau tidak ada data, mencoba lagi...")
             
             # Jeda minimal agar tidak spamming tapi tetap cepat
             time.sleep(1)
@@ -80,41 +119,68 @@ def learning_loop(duration_minutes, model_name, topic=""):
     is_learning = False
     print("[Auto Learning] Sesi latihan selesai.")
 
-def start_learning(minutes, topic=""):
-    global learning_thread, is_learning, end_time, learned_items
+def start_learning(minutes, topic="", model_name=None):
+    global learning_thread, is_learning, end_time, learned_items, active_model
     
-    if is_learning:
+    # Cek apakah thread benar-benar masih hidup
+    if is_learning and learning_thread and learning_thread.is_alive():
         return False, "Sudah ada sesi latihan yang berjalan."
+    
+    # Jika is_learning True tapi thread sudah mati, reset status
+    if is_learning:
+        print("[Auto Learning] Deteksi status tersangkut, mereset status...")
+        is_learning = False
         
-    model = get_setting('ollama_model', 'qwen2:0.5b')
+    # Gunakan model yang dikirim dari UI, atau ambil dari setting. 
+    # Jika keduanya tidak ada/salah, ambil model pertama yang tersedia di PC.
+    base_url = get_setting('ollama_api_url', 'http://localhost:11434')
+    model = model_name if model_name else get_setting('ollama_model', get_first_available_model(base_url))
+    
     learned_items = [] # Reset laporan untuk sesi baru
+    active_model = model
     is_learning = True
     learning_thread = threading.Thread(target=learning_loop, args=(minutes, model, topic), daemon=True)
     learning_thread.start()
     
     topic_msg = f" tentang '{topic}'" if topic else ""
-    return True, f"Sesi latihan dimulai selama {minutes} menit{topic_msg}."
+    return True, f"Sesi latihan dimulai selama {minutes} menit{topic_msg} menggunakan model {model}."
 
 def stop_learning():
-    global is_learning
+    global is_learning, learning_thread
     if not is_learning:
-        return False, "Tidak ada sesi latihan yang sedang berjalan."
-        
+        # Jika is_learning False tapi thread masih ada, bersihkan tetap
+        is_learning = False
+        learning_thread = None
+        return True, "Status latihan sudah dalam keadaan berhenti."
+    
     is_learning = False
-    return True, "Sesi latihan dihentikan paksa."
+    learning_thread = None
+    return True, "Sesi latihan telah dihentikan secara manual."
 
 def get_status():
-    global is_learning, end_time, learned_items
+    global is_learning, end_time, learned_items, learning_thread
+    
+    # Cek apakah thread benar-benar masih hidup jika is_learning True
+    if is_learning and (not learning_thread or not learning_thread.is_alive()):
+        is_learning = False
+    
     if is_learning:
-        remaining_seconds = int(end_time - time.time())
-        if remaining_seconds <= 0:
-            is_learning = False
-            return {"status": "inactive", "learned_items": learned_items}
-        
-        minutes, seconds = divmod(remaining_seconds, 60)
+        if end_time is None:
+            time_str = "Infinite"
+        else:
+            remaining_seconds = int(end_time - time.time())
+            if remaining_seconds <= 0:
+                is_learning = False
+                return {"is_learning": False, "status": "inactive", "learned_items": learned_items}
+            
+            minutes, seconds = divmod(remaining_seconds, 60)
+            time_str = f"{minutes:02d}:{seconds:02d}"
+
         return {
+            "is_learning": True,
             "status": "active",
-            "time_remaining": f"{minutes:02d}:{seconds:02d}",
+            "time_remaining": time_str,
+            "model_name": active_model,
             "learned_items": learned_items
         }
-    return {"status": "inactive", "learned_items": learned_items}
+    return {"is_learning": False, "status": "inactive", "learned_items": learned_items}

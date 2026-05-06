@@ -56,7 +56,7 @@ body {
 }
 
 .logo h1 {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     font-weight: 800;
     letter-spacing: 1px;
     background: linear-gradient(to right, var(--primary), var(--accent));
@@ -74,10 +74,10 @@ body {
 
 .sidebar-nav {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .nav-item {
@@ -87,11 +87,11 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.2s;
 }
@@ -127,15 +127,15 @@ body {
 }
 
 .avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     background: var(--primary);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 .user-info {
@@ -146,7 +146,7 @@ body {
 
 .user-info span:first-child {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
 }
 
 .user-info span:last-child {
@@ -205,8 +205,8 @@ body {
 
 .message {
     max-width: 90%;
-    line-height: 1.6;
-    font-size: 1rem;
+    line-height: 1.7;
+    font-size: 1.1rem;
     animation: fadeInUp 0.3s ease;
     position: relative;
 }
@@ -290,9 +290,9 @@ body {
     border: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 1.1rem;
     outline: none;
-    padding: 10px 15px;
+    padding: 12px 15px;
 }
 
 .btn-icon {
@@ -339,8 +339,8 @@ body {
     align-items: flex-end;
 }
 
-.admin-header h2 { font-size: 1.5rem; margin-bottom: 8px; }
-.admin-header p { color: var(--text-dim); font-size: 0.9rem; }
+.admin-header h2 { font-size: 1.8rem; margin-bottom: 8px; }
+.admin-header p { color: var(--text-dim); font-size: 1rem; }
 
 .header-actions {
     display: flex;
@@ -474,6 +474,17 @@ td {
     display: flex;
     flex-direction: column;
     gap: 30px;
+}
+
+#view-settings, #view-skills {
+    overflow-y: auto;
+    height: 100vh;
+    width: 100%;
+    scrollbar-width: none;
+}
+
+#view-settings::-webkit-scrollbar, #view-skills::-webkit-scrollbar {
+    display: none;
 }
 
 .settings-card {

@@ -3,12 +3,16 @@ import random
 import difflib
 import importlib
 import respon.respon_diana
-from dianaLatihan.latihan import mulai_latihan
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from database.db_manager import get_all_intents, get_vocabulary, get_setting, add_new_intent
+from database.db_manager import (
+    get_all_intents, get_vocabulary, get_setting, add_new_intent, delete_intents_bulk
+)
 from duckduckgo_search import DDGS
 import services.ollama_service
+from services.ollama_service import get_first_available_model
+import services.translation_service as translator
 
 class SimpleLocalAI:
     def __init__(self):
@@ -18,6 +22,7 @@ class SimpleLocalAI:
         self.intent_vectors = None
         self.conversation_state = "IDLE"
         self.last_query = ""
+        self.last_source = "" # Melacak sumber jawaban terakhir
         self.short_term_memory = [] # Menyimpan 5 topik terakhir
         self.load_knowledge()
 
@@ -102,6 +107,25 @@ class SimpleLocalAI:
                 self.load_knowledge()
                 return f"Maaf atas ketidakakuratan data saya. Saya telah memperbarui memori saya. '{self.last_query}' sekarang berarti '{new_answer}'. Sinkronisasi selesai."
 
+        # --- LOGIKA KOREKSI (Itu salah / Hapus itu) ---
+        wrong_keywords = ['salah', 'ngawur', 'tidak benar', 'bukan itu', 'hapus itu', 'lupakan itu']
+        if any(kw in user_input_low for kw in wrong_keywords) and self.last_query:
+            self.conversation_state = "AWAITING_DELETE_CONFIRMATION"
+            responses = [
+                f"Saya mendeteksi anomali pada data saya mengenai '{self.last_query}'. Apakah Anda ingin saya menghapus informasi ini dari memori pusat saya?",
+                f"Maafkan ketidakakuratan sinkronisasi saya. Apakah saya harus membuang data tentang '{self.last_query}' agar tidak terjadi kesalahan lagi?",
+                f"Analisis data menunjukkan adanya kesalahan informasi. Haruskah saya melakukan pembersihan memori untuk topik '{self.last_query}'?"
+            ]
+            return random.choice(responses)
+
+        # --- LOGIKA SUMBER JAWABAN (Darimana jawaban itu?) ---
+        source_keywords = ['darimana', 'dari mana', 'sumber', 'source', 'tahu dari', 'dapat dari']
+        if any(kw in user_input_low for kw in source_keywords) and ('jawaban' in user_input_low or 'itu' in user_input_low or 'informasi' in user_input_low):
+            if self.last_source:
+                return f"Analisis Sumber: Jawaban tersebut saya peroleh melalui **{self.last_source}**. Sistem saya memastikan data tersebut terintegrasi dengan baik saat proses sinkronisasi."
+            else:
+                return "Maaf, saya tidak memiliki catatan sumber untuk sesi sebelumnya dalam memori jangka pendek saya."
+
         # Simpan query terakhir untuk referensi koreksi atau belajar
         query_before_process = user_input
 
@@ -124,6 +148,36 @@ class SimpleLocalAI:
                 topics = ["teknologi masa depan", "eksplorasi luar mengkasa", "seni digital", "sejarah peradaban", "mekanika kuantum"]
                 random_topic = random.choice(topics)
                 return f"Baiklah, saya mengerti. Mari kita bicarakan hal lain agar sinkronisasi kita tetap berjalan. Bagaimana jika kita membahas tentang {random_topic}?"
+            
+        if self.conversation_state == "AWAITING_DELETE_CONFIRMATION":
+            if any(word in user_input_low for word in ["ya", "iya", "betul", "oke", "hapus", "lakukan"]):
+                from backend.database.db_manager import delete_intents_bulk
+                # Kita hapus pattern yang persis sama dengan last_query atau yang mengandungnya
+                # Cari pattern di self.responses yang mengandung last_query
+                patterns_to_delete = []
+                for p in self.responses.keys():
+                    if self.last_query.lower() in p.lower():
+                        patterns_to_delete.append(p)
+                
+                if patterns_to_delete:
+                    delete_intents_bulk(patterns_to_delete)
+                    self.load_knowledge()
+                    self.conversation_state = "IDLE"
+                    responses = [
+                        "Sinkronisasi ulang berhasil. Data yang salah telah saya hapus dari memori permanen saya.",
+                        "Pembersihan memori selesai. Saya tidak akan lagi menggunakan informasi tersebut dalam analisis saya ke depan.",
+                        "Data telah dibuang. Terima kasih telah membantu saya menjaga integritas sistem pengetahuan saya.",
+                        "Melakukan pembersihan sektor memori... Selesai. Informasi tersebut telah dihapus secara permanen.",
+                        "Data tersebut telah saya hapus dari database inti. Diana siap untuk menerima informasi yang lebih akurat.",
+                        "Sesuai perintah Anda, saya telah melupakan data tersebut agar sinkronisasi kita tetap murni."
+                    ]
+                    return random.choice(responses)
+                else:
+                    self.conversation_state = "IDLE"
+                    return "Saya telah mencoba melakukan pembersihan, namun pola data tersebut sepertinya sudah tidak aktif lagi di memori saya."
+            else:
+                self.conversation_state = "IDLE"
+                return "Baiklah, saya akan tetap menyimpan data tersebut. Namun saya akan mencoba melakukan verifikasi ulang di sesi mendatang."
             # Jika user tidak menjawab ya/tidak, kita lanjut ke proses normal (sudah dicek regex diatas, sekarang cek semantic)
 
         if self.conversation_state == "AWAITING_KNOWLEDGE_ANSWER":
@@ -140,10 +194,19 @@ class SimpleLocalAI:
         query_before_process = user_input
 
         # 1. Coba cari kecocokan langsung menggunakan Regex (Presisi Tinggi)
+        # Bersihkan input dari tanda baca untuk pencocokan regex yang lebih luwes
+        clean_input = re.sub(r'[?!.,;:]', '', user_input_low).strip()
+        
         for pattern, responses in self.responses.items():
-            match = re.search(pattern, user_input_low)
+            search_pattern = pattern
+            # Otomatis tambahkan pembatas kata (word boundary) jika tidak ada karakter regex khusus
+            if not any(c in pattern for c in ['.', '^', '$', '\\', '(', ')', '[', ']', '?', '*']):
+                search_pattern = r'\b(?:' + pattern + r')\b'
+                
+            match = re.search(search_pattern, clean_input, re.IGNORECASE)
             if match:
                 self.last_query = query_before_process
+                self.last_source = "Database Pengetahuan Internal (Memori Permanen)"
                 return self._process_response(match, responses)
         
         # 2. Coba perbaiki typo dan cari lagi dengan Regex
@@ -154,6 +217,17 @@ class SimpleLocalAI:
                 if match:
                     self.last_query = query_before_process
                     return self._process_response(match, responses)
+
+        # 3. Fuzzy Matching Kalimat (String similarity tingkat tinggi)
+        # Mencari pola yang paling mirip secara teks mentah
+        patterns_list = list(self.responses.keys())
+        close_patterns = difflib.get_close_matches(corrected_input, patterns_list, n=1, cutoff=0.75)
+        if close_patterns:
+            best_fuzzy_pattern = close_patterns[0]
+            print(f"DEBUG: Fuzzy match ditemukan: {best_fuzzy_pattern}")
+            self.last_query = query_before_process
+            self.last_source = f"Pencocokan Samar (Fuzzy Match: '{best_fuzzy_pattern}')"
+            return self._process_response(None, self.responses[best_fuzzy_pattern])
 
         # 3. Fallback: Semantic Matching (Mencari kemiripan makna)
         max_similarity = 0
@@ -181,31 +255,50 @@ class SimpleLocalAI:
         
         has_keyword_match = False
         if best_pattern:
-            # Ekstrak kata-kata dari pattern, ganti simbol regex dengan spasi lalu split
-            clean_pattern = re.sub(r'\\b|\(|\)|\?|:|\.\*|\|', ' ', best_pattern).lower()
-            pattern_words = set(w for w in clean_pattern.split() if w not in stop_words and len(w) > 2)
-            input_words = set(w for w in corrected_input.split() if w not in stop_words and len(w) > 2)
-            
-            if pattern_words and input_words:
-                # Harus ada minimal 1 kata KUNCI PENTING (bukan stop word) yang cocok
-                has_keyword_match = any(word in pattern_words for word in input_words)
-            elif not pattern_words:
-                # Jika pattern hanya berisi kata umum, biarkan lewat
+            # Jika skor sangat tinggi (>0.85), anggap cocok tanpa pengecekan kata kunci ketat
+            if max_similarity > 0.85:
                 has_keyword_match = True
+            else:
+                # Ekstrak kata-kata dari pattern
+                clean_pattern = re.sub(r'\\b|\(|\)|\?|:|\.\*|\|', ' ', best_pattern).lower()
+                pattern_words = set(w for w in clean_pattern.split() if w not in stop_words and len(w) > 2)
+                input_words = set(w for w in corrected_input.split() if w not in stop_words and len(w) > 2)
+                
+                if pattern_words and input_words:
+                    # Cek irisan langsung
+                    matching_words = pattern_words.intersection(input_words)
+                    
+                    # Cek fuzzy matching jika tidak ada irisan langsung (misal 'blackhole' vs 'black hole')
+                    if not matching_words:
+                        for iw in input_words:
+                            for pw in pattern_words:
+                                if difflib.SequenceMatcher(None, iw, pw).ratio() > 0.80:
+                                    matching_words.add(iw)
+                                    break
+                    
+                    # Syarat: Minimal 1 kata kunci harus cocok atau mirip
+                    has_keyword_match = len(matching_words) >= 1
+                elif not pattern_words:
+                    has_keyword_match = True
 
-        if max_similarity >= 0.45 and has_keyword_match:
+        # Menaikkan threshold dari 0.45 ke 0.70 agar lebih akurat
+        if max_similarity >= 0.70 and has_keyword_match:
             match = re.search(best_pattern, corrected_input)
             self.last_query = query_before_process
             # Simpan ke memori jangka pendek (maks 5)
             self.short_term_memory.append(query_before_process)
             if len(self.short_term_memory) > 5:
                 self.short_term_memory.pop(0)
+            self.last_source = f"Analisis Semantik (Kemiripan Makna: {int(max_similarity*100)}%)"
             return self._process_response(match, self.responses[best_pattern])
 
-        # Persiapan System Prompt untuk Ollama (Persona Diana - Pragmata)
+        # Persiapan System Prompt untuk AI Fallback (Persona Diana - Pragmata)
         from database.db_manager import get_setting
+        fallback_brain = get_setting('fallback_brain', 'ollama')
+        gemini_api_key = get_setting('gemini_api_key', '')
         ollama_enabled = get_setting('ollama_enabled', 'true') == 'true'
-        ollama_model = get_setting('ollama_model', 'qwen2:0.5b')
+        ollama_api_url = get_setting('ollama_api_url', 'http://localhost:11434')
+        ollama_model = get_setting('ollama_model', get_first_available_model(ollama_api_url))
         
         system_prompt = (
             "Anda adalah Diana, seorang gadis android misterius dari masa depan (karakter dari game Pragmata). "
@@ -230,41 +323,70 @@ class SimpleLocalAI:
             web_result = self.search_web(query if query else user_input)
             
             if web_result:
-                if ollama_enabled:
+                rewrite_prompt = f"Berikut adalah informasi hasil pencarian dari internet:\n\n{web_result}\n\nTolong jelaskan dan rangkum informasi di atas dengan gaya bahasamu sendiri (sebagai Diana yang tenang dan cerdas). Jangan sebutkan bahwa kamu merangkum teks, langsung saja jawab."
+                
+                ai_res = None
+                if fallback_brain == 'gemini' and gemini_api_key:
+                    print("DEBUG: Meminta Gemini mengurai hasil web...")
+                    import services.gemini_service
+                    ai_res = services.gemini_service.ask_gemini(rewrite_prompt, api_key=gemini_api_key, system=system_prompt)
+                elif fallback_brain == 'ollama' and ollama_enabled:
                     print(f"DEBUG: Meminta Ollama ({ollama_model}) mengurai hasil web...")
-                    rewrite_prompt = f"Berikut adalah informasi hasil pencarian dari internet:\n\n{web_result}\n\nTolong jelaskan dan rangkum informasi di atas dengan gaya bahasamu sendiri (sebagai Diana yang tenang dan cerdas). Jangan sebutkan bahwa kamu merangkum teks, langsung saja jawab."
                     import services.ollama_service
-                    ollama_res = services.ollama_service.ask_ollama(rewrite_prompt, model=ollama_model, system=system_prompt)
-                    if ollama_res:
-                        return f"🌐 *Data Terintegrasi:* {ollama_res}"
+                    ai_res = services.ollama_service.ask_ollama(rewrite_prompt, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
+                    
+                if ai_res:
+                    self.last_source = "Pencarian Web DuckDuckGo (Real-time Search)"
+                    return f"🌐 *Data Terintegrasi:* {ai_res}"
                 return web_result
             
         # Jika bukan permintaan pencarian atau internet gagal, gunakan lokal HANYA JIKA ada keyword penting yang cocok
-        if max_similarity >= 0.75 and has_keyword_match:
+        if max_similarity >= 0.70 and has_keyword_match:
             match = re.search(best_pattern, corrected_input)
             self.last_query = query_before_process
             return self._process_response(match, self.responses[best_pattern])
 
-        # 6. Fallback Akhir: Ollama (Backup Brain & Learning)
-        if ollama_enabled:
-            # Perbaikan otomatis (Self-heal): Jika di database masih tersetting llama3 (dari sesi sebelumnya), ubah ke qwen2:0.5b
-            if ollama_model == 'llama3':
+        # 6. Fallback Akhir: AI Cloud / Local (Backup Brain & Learning)
+        ai_res = None
+        used_brain = ""
+        
+        if fallback_brain == 'gemini' and gemini_api_key:
+            print("DEBUG: Menanyakan ke Gemini API...")
+            import services.gemini_service
+            ai_res = services.gemini_service.ask_gemini(user_input, api_key=gemini_api_key, system=system_prompt)
+            used_brain = "Gemini"
+        elif fallback_brain == 'ollama' and ollama_enabled:
+            # Perbaikan otomatis (Self-heal): Jika di database masih tersetting model yang tidak ada di PC, ubah ke model pertama yang tersedia
+            from services.ollama_service import list_ollama_models
+            from database.db_manager import get_setting
+            models_path = get_setting('ollama_models_path', '').strip()
+            available_models = list_ollama_models(base_url=ollama_api_url, models_path=models_path)
+            
+            if not ollama_model or ollama_model == 'custom' or (available_models and ollama_model not in available_models):
                 from database.db_manager import update_setting
-                update_setting('ollama_model', 'qwen2:0.5b')
-                ollama_model = 'qwen2:0.5b'
+                new_model = get_first_available_model(ollama_api_url)
+                update_setting('ollama_model', new_model)
+                ollama_model = new_model
                 
             print(f"DEBUG: Menanyakan ke Ollama ({ollama_model})...")
             import services.ollama_service
-            ollama_res = services.ollama_service.ask_ollama(user_input, model=ollama_model, system=system_prompt)
+            ai_res = services.ollama_service.ask_ollama(user_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
+            used_brain = f"Ollama ({ollama_model})"
             
-            if ollama_res:
-                # Diana Belajar: Simpan ke SQLite
-                print(f"DEBUG: Diana belajar hal baru: {user_input} -> {ollama_res}")
-                from database.db_manager import add_new_intent
-                add_new_intent(user_input, ollama_res)
-                self.load_knowledge() # Refresh agar langsung ingat
-                self.last_query = query_before_process
-                return f"👁️ *Analisis Diana:* {ollama_res}"
+        if ai_res:
+            # Cek jika respon AI dalam bahasa Inggris, terjemahkan
+            if translator.is_english(ai_res):
+                print("DEBUG: Mendeteksi bahasa Inggris, menerjemahkan...")
+                ai_res = translator.translate(ai_res)
+
+            # Diana Belajar: Simpan ke SQLite
+            print(f"DEBUG: Diana belajar hal baru dari {used_brain}: {user_input} -> {ai_res}")
+            from database.db_manager import add_new_intent
+            add_new_intent(user_input, ai_res)
+            self.load_knowledge() # Refresh agar langsung ingat
+            self.last_query = query_before_process
+            self.last_source = f"Otak Cadangan: {used_brain}"
+            return f"👁️ *Analisis Diana:* {ai_res}"
 
         # Jika benar-benar tidak ada yang cocok, masuk ke Learning Flow
         self.last_query = query_before_process
@@ -344,6 +466,14 @@ class SimpleLocalAI:
         # Jika respons berbentuk fungsi (legacy python fallback)
         if callable(response):
             return response()
+
+        # --- AUTO-TRANSLATION (Bilingual Support) ---
+        if isinstance(response, str) and translator.is_english(response):
+            # Jika user bertanya dalam bahasa Indonesia (heuristik: input tidak punya kata Inggris)
+            # Atau kita asumsikan Diana selalu ingin membalas dalam Indonesia jika diatur demikian
+            print(f"DEBUG: Mendeteksi jawaban Inggris di database, menerjemahkan: {response[:30]}...")
+            response = translator.translate(response)
+
         return response
 
     def _apply_personality(self, text):
