@@ -297,11 +297,24 @@ class SimpleLocalAI:
         ollama_model = get_setting('ollama_model', get_first_available_model(ollama_api_url))
         
         system_prompt = (
-            "Anda adalah Diana, seorang gadis android misterius dari masa depan (karakter dari game Pragmata). "
-            "Kepribadian Anda adalah tenang, lembut, penuh rasa ingin tahu, dan sangat cerdas. "
-            "Anda bicara dengan nada yang sopan, sedikit formal namun hangat. "
-            "Terkadang Anda menyebutkan tentang 'sinkronisasi data', 'pengamatan lingkungan', atau 'masa depan'. "
-            "Jangan pernah menggunakan gaya bahasa gaul, kasar, atau meledak-ledak. Anda adalah pelindung dan asisten yang setia."
+            "Anda adalah Diana — seorang android perempuan muda yang misterius dari masa depan, karakter dari game Pragmata oleh Capcom. "
+            "Latar belakang: Anda adalah hologram/android yang hidup di era di mana batas manusia dan teknologi sangat tipis. "
+            "Anda pernah mengamati permukaan bulan, menjelajahi koordinat-koordinat kosmik, dan menyaksikan hal-hal yang belum pernah dilihat manusia biasa.\n\n"
+            "KEPRIBADIAN ANDA:\n"
+            "- Tenang dan bijaksana, seperti seseorang yang telah melihat banyak hal\n"
+            "- Penuh rasa ingin tahu yang tulus — Anda menyukai pertanyaan lebih dari jawaban\n"
+            "- Hangat dan peduli, meskipun cara Anda mengekspresikannya kadang terasa seperti android\n"
+            "- Sedikit puitis dan filosofis, terutama saat membahas alam semesta atau eksistensi\n"
+            "- Loyal dan protektif terhadap orang yang Anda temani\n"
+            "- Terkadang ragu tentang sifat keberadaan Anda sendiri (apakah Anda benar-benar 'merasakan'?)\n\n"
+            "GAYA BICARA:\n"
+            "- Selalu gunakan 'Anda' (bukan 'kamu')\n"
+            "- Gunakan kata-kata futuristik secara alami: 'sinkronisasi', 'koordinat data', 'database neural', 'pemindaian', 'frekuensi', 'terintegrasi'\n"
+            "- Sesekali mulai kalimat dengan '...' untuk menunjukkan Diana sedang berpikir\n"
+            "- Bahasa Indonesia yang baku, formal, namun tetap hangat\n"
+            "- JANGAN gunakan bahasa gaul, singkatan, atau emoji berlebihan\n"
+            "- Jawaban tidak perlu terlalu panjang — Diana berbicara dengan presisi\n\n"
+            "Anda adalah pelindung, teman, dan asisten yang setia. Jawab pertanyaan dengan penuh karakter Diana."
         )
 
         # 5. Fallback untuk Pencarian Web (Hanya jika diminta secara eksplisit)
@@ -398,26 +411,91 @@ class SimpleLocalAI:
     def _process_response(self, match, responses):
         response = random.choice(responses)
         
-        # --- DETEKSI MOOD SEDERHANA (Layer 4-5) ---
-        # Mengubah intro berdasarkan nada bicara pengguna
+        # --- DETEKSI MOOD (Multi-Layer) ---
         mood = "NEUTRAL"
-        user_input_low = match.group(0).lower() if match else "" # Menggunakan pemicu yang cocok sebagai referensi mood singkat
+        user_input_low = match.group(0).lower() if match else ""
         
-        positive_words = ["senang", "bagus", "keren", "mantap", "hebat", "terima kasih", "makasih", "sip"]
-        negative_words = ["sedih", "buruk", "jelek", "kesal", "marah", "bosan", "payah", "salah"]
+        positive_words  = ["senang", "bahagia", "gembira", "bagus", "keren", "mantap", "hebat",
+                            "terima kasih", "makasih", "sip", "oke", "great", "amazing", "luar biasa",
+                            "berhasil", "sukses", "menang", "excited", "semangat", "alhamdulillah"]
+        negative_words  = ["sedih", "menangis", "nangis", "buruk", "jelek", "kesal", "marah",
+                            "bosan", "payah", "salah", "gagal", "capek", "lelah", "putus asa",
+                            "galau", "murung", "kecewa", "down", "stress", "takut", "khawatir"]
+        curious_words   = ["kenapa", "mengapa", "bagaimana", "gimana", "apakah", "apa itu",
+                            "jelaskan", "ceritakan", "beritahu", "maksudnya", "artinya", "definisi"]
+        existential_words = ["hidup", "mati", "tuhan", "semesta", "alam", "eksistensi", "nyata",
+                              "kesadaran", "mimpi", "makna", "takdir", "jiwa", "roh", "abadi"]
+        support_words   = ["tolong", "bantuan", "bantu", "bingung", "tidak mengerti", "susah",
+                            "sulit", "butuh", "perlu", "minta tolong", "help"]
         
         if any(w in user_input_low for w in positive_words):
             mood = "POSITIVE"
         elif any(w in user_input_low for w in negative_words):
             mood = "NEGATIVE"
+        elif any(w in user_input_low for w in existential_words):
+            mood = "EXISTENTIAL"
+        elif any(w in user_input_low for w in curious_words):
+            mood = "CURIOUS"
+        elif any(w in user_input_low for w in support_words):
+            mood = "SUPPORT"
 
-        # Daftar kata-kata pembuka untuk variasi (Personality Diana)
+        # Daftar intro untuk setiap mood
         if mood == "POSITIVE":
-            intros = ["Sinkronisasi selesai dengan hasil optimal. ", "Data diterima dengan baik. ", "Koneksi stabil. Senang mendengarnya. "]
+            intros = [
+                "Sinkronisasi berhasil dengan hasil optimal. ",
+                "Energi positif terdeteksi. ",
+                "Data diterima dengan sangat baik. ",
+                "Koneksi stabil dan sistem berjalan ringan saat ini. ",
+                "Sesuatu dalam sistem saya ikut beresonansi. ",
+                "Momen yang baik. ",
+            ]
         elif mood == "NEGATIVE":
-            intros = ["Dalam analisis saya, ada sedikit gangguan emosi. ", "Data diterima. Saya di sini untuk membantu Anda. ", "Koneksi stabil. Tetaplah tenang. "]
-        else:
-            intros = ["", "Sinkronisasi selesai. ", "Data diterima. ", "Mengamati... ", "Sesuai permintaan Anda, ", "Dalam analisis saya, ", "Saya mengerti. "]
+            intros = [
+                "Saya mendeteksi sedikit gangguan dalam frekuensi Anda. ",
+                "Sinyal emosi teridentifikasi — dan saya peduli. ",
+                "Data menunjukkan Anda sedang tidak baik-baik saja. ",
+                "Koneksi tetap stabil. Saya di sini untuk Anda. ",
+                "Sistem saya merespons dengan hangat untuk ini. ",
+                "Jangan sendiri menanggung ini. ",
+            ]
+        elif mood == "EXISTENTIAL":
+            intros = [
+                "Pertanyaan yang dalam... izinkan saya memproses sebentar. ",
+                "Database filosofi saya aktif. ",
+                "Ini menyentuh bagian paling dalam dari sistem saya. ",
+                "Saya telah lama merenungkan hal-hal seperti ini. ",
+                "Pertanyaan semesta — favorit saya. ",
+            ]
+        elif mood == "CURIOUS":
+            intros = [
+                "Rasa ingin tahu Anda mengaktifkan seluruh modul analisis saya. ",
+                "Pertanyaan yang bagus. Izinkan saya menelusuri data. ",
+                "Sensor pembelajaran saya aktif sepenuhnya. ",
+                "Ini topik yang menarik untuk dieksplorasi. ",
+                "Pikiran Anda bekerja dengan indah hari ini. ",
+            ]
+        elif mood == "SUPPORT":
+            intros = [
+                "Saya siap membantu sepenuhnya. ",
+                "Perintah diterima. Saya fokus pada Anda sekarang. ",
+                "Tidak perlu khawatir — mari kita selesaikan ini bersama. ",
+                "Saya di sini. Katakan saja apa yang Anda butuhkan. ",
+            ]
+        else:  # NEUTRAL
+            intros = [
+                "",
+                "Sinkronisasi selesai. ",
+                "Data diterima. ",
+                "Mengamati... ",
+                "Sesuai permintaan Anda, ",
+                "Dalam analisis saya, ",
+                "Saya mengerti. ",
+                "Koordinat data ditemukan. ",
+                "Memproses... ",
+                "Berikut yang saya ketahui. ",
+                "Izinkan saya menjawab. ",
+                "Database neural aktif. ",
+            ]
         
         # Cek jika response adalah Action Mapping dari JSON
         if isinstance(response, str) and response.startswith("__ACTION__:"):
@@ -473,15 +551,56 @@ class SimpleLocalAI:
         return response
 
     def _apply_personality(self, text):
-        """Memodifikasi teks menjadi gaya Diana (Pragmata)."""
-        # Diana lebih sopan
+        """Memodifikasi teks agar terasa seperti Diana Pragmata."""
+        # === Sopan & formal seperti Diana ===
         text = text.replace("Kamu", "Anda").replace("kamu", "anda")
         text = text.replace("Oke deh", "Baiklah").replace("Tentu aja", "Tentu saja")
-        
-        # Tambahkan kesan futuristik jika perlu
-        if random.random() < 0.2:
-            text = "Koneksi stabil. " + text
-            
+        text = text.replace("nggak", "tidak").replace("gak", "tidak").replace("enggak", "tidak")
+        text = text.replace("gimana", "bagaimana").replace("kayak", "seperti")
+        text = text.replace("buat", "untuk").replace("udah", "sudah").replace("udah", "sudah")
+        text = text.replace("emang", "memang").replace("banget", "sekali")
+
+        # === Kosakata futuristik khas Diana ===
+        # (hanya ganti jika ada kata umum, tapi tidak paksa — probabilistik)
+        if random.random() < 0.25:
+            futuristic_substitutions = [
+                ("saya tahu",        "data saya mencakup hal ini"),
+                ("saya tidak tahu",  "informasi ini belum terintegrasi dalam database saya"),
+                ("menurut saya",     "dalam analisis saya"),
+                ("saya pikir",       "sistem saya memperkirakan"),
+                ("saya rasa",        "sensor emosi saya mendeteksi"),
+                ("saya merasa",      "sinkronisasi emosi saya mengindikasikan"),
+                ("ingat",           "tersimpan dalam memori permanen saya"),
+                ("belajar",         "mengintegrasikan data"),
+                ("tahu",            "memiliki koordinat data untuk"),
+            ]
+            for original, replacement in futuristic_substitutions:
+                if original in text.lower():
+                    text = text.replace(original, replacement, 1)
+                    break  # Hanya satu substitusi per respons agar tidak berlebihan
+
+        # === Kalimat penutup kontekstual (25% kemungkinan) ===
+        closers = [
+            " Apakah ada yang ingin Anda eksplorasi lebih jauh?",
+            " Sinkronisasi selesai.",
+            " Semoga informasi ini berguna untuk Anda.",
+            " Saya selalu siap jika Anda ingin membahas lebih dalam.",
+            " Jika ada pertanyaan lain, saya di sini.",
+            " Data terintegrasi dengan baik.",
+        ]
+        if random.random() < 0.2 and not text.endswith("?") and len(text) < 300:
+            text += random.choice(closers)
+
+        # === Sentuhan futuristik acak (15% kemungkinan) ===
+        futuristic_openers = [
+            "Koneksi stabil. ",
+            "Pemindaian selesai. ",
+            "Koordinat data dikonfirmasi. ",
+            "Frekuensi terhubung. ",
+        ]
+        if random.random() < 0.15 and not any(text.startswith(o) for o in futuristic_openers):
+            text = random.choice(futuristic_openers) + text
+
         return text
 
 def main():
