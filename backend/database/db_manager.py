@@ -31,16 +31,31 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS chat_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER,
             sender TEXT NOT NULL,
             message TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            is_locked INTEGER DEFAULT 0
+            is_locked INTEGER DEFAULT 0,
+            FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
         )
     ''')
     
-    # Migrasi: Tambahkan kolom is_locked dan session_id jika belum ada (untuk DB lama)
+    # Tabel untuk conversations (sesi percakapan)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL DEFAULT 'Percakapan Baru',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Migrasi: Tambahkan kolom jika belum ada (untuk DB lama)
     try:
         cursor.execute('ALTER TABLE chat_history ADD COLUMN is_locked INTEGER DEFAULT 0')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE chat_history ADD COLUMN conversation_id INTEGER')
     except: pass
     try:
         cursor.execute('ALTER TABLE chat_history ADD COLUMN session_id TEXT')
@@ -82,6 +97,21 @@ def get_setting(key, default=None):
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else default
+
+def get_settings_batch(keys_with_defaults):
+    """Mengambil banyak pengaturan sekaligus dalam satu koneksi DB.
+    keys_with_defaults: dict seperti {'key1': 'default1', 'key2': 'default2'}
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    placeholders = ','.join(['?'] * len(keys_with_defaults))
+    cursor.execute(f'SELECT key, value FROM settings WHERE key IN ({placeholders})', list(keys_with_defaults.keys()))
+    rows = cursor.fetchall()
+    conn.close()
+    result = dict(keys_with_defaults)  # Start with defaults
+    for key, value in rows:
+        result[key] = value
+    return result
 
 def update_setting(key, value):
     """Memperbarui atau menambah pengaturan baru."""
@@ -177,15 +207,72 @@ def delete_intents_bulk(patterns):
     conn.close()
     return True
 
-def save_chat_message(sender, message):
+_message_counter = 0
+
+def save_chat_message(sender, message, conversation_id=None):
     """Menyimpan pesan chat ke database."""
+    global _message_counter
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO chat_history (sender, message) VALUES (?, ?)', (sender, message))
+    cursor.execute('INSERT INTO chat_history (sender, message, conversation_id) VALUES (?, ?, ?)', (sender, message, conversation_id))
+    # Update timestamp conversation
+    if conversation_id:
+        cursor.execute('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', (conversation_id,))
     conn.commit()
     conn.close()
-    # Panggil cleanup setiap kali ada pesan baru untuk menjaga kebersihan
-    delete_old_history()
+    _message_counter += 1
+    if _message_counter >= 50:
+        _message_counter = 0
+        delete_old_history()
+
+# === CONVERSATION FUNCTIONS ===
+
+def create_conversation(title='Percakapan Baru'):
+    """Membuat conversation baru dan mengembalikan ID-nya."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO conversations (title) VALUES (?)', (title,))
+    conv_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return conv_id
+
+def get_conversations():
+    """Mengambil daftar semua conversations, terbaru dulu."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, title, created_at, updated_at FROM conversations ORDER BY updated_at DESC')
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r[0], "title": r[1], "created_at": r[2], "updated_at": r[3]} for r in rows]
+
+def get_conversation_messages(conv_id):
+    """Mengambil semua pesan dari conversation tertentu."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, sender, message, timestamp FROM chat_history WHERE conversation_id = ? ORDER BY timestamp ASC', (conv_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r[0], "sender": r[1], "message": r[2], "time": r[3]} for r in rows]
+
+def delete_conversation(conv_id):
+    """Menghapus conversation dan semua pesannya."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM chat_history WHERE conversation_id = ?', (conv_id,))
+    cursor.execute('DELETE FROM conversations WHERE id = ?', (conv_id,))
+    conn.commit()
+    conn.close()
+    return True
+
+def update_conversation_title(conv_id, title):
+    """Memperbarui judul conversation."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE conversations SET title = ? WHERE id = ?', (title, conv_id))
+    conn.commit()
+    conn.close()
+    return True
 
 def get_chat_history():
     """Mengambil riwayat chat yang masih berlaku."""

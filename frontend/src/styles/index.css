@@ -168,13 +168,13 @@ body {
 
 #chat-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 780px;
     flex: 1;
-    padding: 60px 20px 150px 20px;
+    padding: 40px 20px 130px 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 16px;
     scrollbar-width: none;
 }
 
@@ -204,9 +204,9 @@ body {
 }
 
 .message {
-    max-width: 90%;
-    line-height: 1.7;
-    font-size: 1.1rem;
+    max-width: 85%;
+    line-height: 1.6;
+    font-size: 0.93rem;
     animation: fadeInUp 0.3s ease;
     position: relative;
 }
@@ -215,23 +215,23 @@ body {
     align-self: flex-end;
     background: var(--user-msg);
     color: white;
-    padding: 12px 20px;
-    border-radius: 20px;
+    padding: 10px 16px;
+    border-radius: 18px;
 }
 
 .bot {
     align-self: flex-start;
     background-color: var(--bot-msg);
-    color: white;
-    padding: 12px 0;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 0;
     width: 100%;
 }
 
 .message::before {
     content: attr(data-sender);
     position: absolute;
-    top: -22px;
-    font-size: 0.7rem;
+    top: -18px;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -290,9 +290,9 @@ body {
     border: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 1.1rem;
+    font-size: 0.93rem;
     outline: none;
-    padding: 12px 15px;
+    padding: 10px 12px;
 }
 
 .btn-icon {
@@ -339,8 +339,8 @@ body {
     align-items: flex-end;
 }
 
-.admin-header h2 { font-size: 1.8rem; margin-bottom: 8px; }
-.admin-header p { color: var(--text-dim); font-size: 1rem; }
+.admin-header h2 { font-size: 1.3rem; margin-bottom: 6px; }
+.admin-header p { color: var(--text-dim); font-size: 0.85rem; }
 
 .header-actions {
     display: flex;

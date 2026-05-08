@@ -2,50 +2,40 @@
 __pycache__/
 *.py[cod]
 *$py.class
-backend/__pycache__/
-backend/database/__pycache__/
-backend/core/__pycache__/
-backend/respon/__pycache__/
-backend/powderLatihan/__pycache__/
 
 # Node.js
 node_modules/
-frontend/node_modules/
 .DS_Store
 dist/
-frontend/dist/
 .astro/
-frontend/.astro/
 
-# Database
+# Database (lokal per device)
 *.db
 backend/data/*.db
 backend/data/*.json
-!backend/data/user_profile.json
+!backend/data/.gitkeep
 
 # Environment
 .env
 .venv
 env/
 venv/
-bin/
-lib/
-develop-eggs/
-downloads/
-eggs/
-.installed.cfg
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# Models
-modelAI/
+# Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
+learning_debug.log
+
+# Models (terlalu besar untuk git)
+modelAI/
+
+# Temporary files
+*.egg-info/
+*.egg
+.installed.cfg
+
+# IDE
+.vscode/
+.idea/
+

@@ -2,12 +2,14 @@ import re
 import random
 import difflib
 import importlib
+import time
 import respon.respon_diana
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from database.db_manager import (
-    get_all_intents, get_vocabulary, get_setting, add_new_intent, delete_intents_bulk
+    get_all_intents, get_vocabulary, get_setting, add_new_intent, delete_intents_bulk,
+    get_settings_batch
 )
 from duckduckgo_search import DDGS
 import services.ollama_service
@@ -24,9 +26,14 @@ class SimpleLocalAI:
         self.last_query = ""
         self.last_source = "" # Melacak sumber jawaban terakhir
         self.short_term_memory = [] # Menyimpan 5 topik terakhir
+        self._knowledge_dirty = False  # Flag untuk lazy reload
+        self._cached_model = None  # Cache model Ollama
+        self._model_cache_time = 0
+        self._settings_cache = {}  # Cache settings
+        self._settings_cache_time = 0
         self.load_knowledge()
 
-    def load_knowledge(self):
+    def load_knowledge(self, force=False):
         # Memuat atau merefresh pengetahuan AI secara dinamis dari SQLite
         importlib.reload(respon.respon_diana)
         
@@ -43,6 +50,43 @@ class SimpleLocalAI:
         
         # Inisialisasi Semantic Matcher
         self.init_semantic_matcher()
+        self._knowledge_dirty = False
+
+    def _mark_knowledge_dirty(self):
+        """Tandai bahwa knowledge perlu di-reload (lazy reload)."""
+        self._knowledge_dirty = True
+
+    def _ensure_knowledge_fresh(self):
+        """Reload knowledge jika dirty (lazy reload untuk performa)."""
+        if self._knowledge_dirty:
+            self.load_knowledge()
+
+    def _get_cached_settings(self):
+        """Ambil semua settings sekaligus dengan cache 10 detik."""
+        now = time.time()
+        if now - self._settings_cache_time < 10:
+            return self._settings_cache
+        
+        self._settings_cache = get_settings_batch({
+            'full_ai_mode': 'off',
+            'fallback_brain': 'ollama',
+            'gemini_api_key': '',
+            'ollama_enabled': 'true',
+            'ollama_api_url': 'http://localhost:11434',
+            'ollama_model': '',
+            'ollama_models_path': ''
+        })
+        self._settings_cache_time = now
+        return self._settings_cache
+
+    def _get_cached_model(self, ollama_api_url):
+        """Cache model Ollama selama 30 detik."""
+        now = time.time()
+        if self._cached_model and now - self._model_cache_time < 30:
+            return self._cached_model
+        self._cached_model = get_first_available_model(ollama_api_url)
+        self._model_cache_time = now
+        return self._cached_model
 
     def init_semantic_matcher(self):
         # Membersihkan pola regex agar bisa diolah secara semantik
@@ -59,9 +103,15 @@ class SimpleLocalAI:
 
     def fix_typos(self, text):
         words = text.split()
+        # Skip typo fix untuk input pendek (1-2 kata) atau terlalu panjang (>10 kata)
+        if len(words) <= 2 or len(words) > 10:
+            return text
         fixed_words = []
         for word in words:
-            # Mencari kata terdekat dari vocabulary dengan tingkat kemiripan minimum 70%
+            # Skip kata pendek (kemungkinan besar benar)
+            if len(word) <= 3:
+                fixed_words.append(word)
+                continue
             matches = difflib.get_close_matches(word, self.vocabulary, n=1, cutoff=0.7)
             if matches:
                 fixed_words.append(matches[0])
@@ -139,22 +189,26 @@ class SimpleLocalAI:
     def respond(self, user_input):
         user_input_low = user_input.lower()
         
+        # Lazy reload jika ada knowledge baru
+        self._ensure_knowledge_fresh()
+        
+        # Batch load semua settings sekali di awal (hemat 6+ DB queries)
+        settings = self._get_cached_settings()
+        
         # --- LOGIKA TOGGLE FULL AI MODE ---
         ai_toggle = self._detect_full_ai_toggle(user_input_low)
         if ai_toggle:
             return self._handle_full_ai_toggle(ai_toggle)
 
         # --- CEK APAKAH FULL AI MODE AKTIF ---
-        from database.db_manager import get_setting
-        full_ai_status = get_setting('full_ai_mode', 'off')
+        full_ai_status = settings['full_ai_mode']
         
         if full_ai_status != 'off':
             # Jika mode Full AI aktif, bypass knowledge base tapi tetap gunakan personality & learning
-            from database.db_manager import add_new_intent
             
-            ollama_api_url = get_setting('ollama_api_url', 'http://localhost:11434')
-            ollama_model = get_setting('ollama_model', get_first_available_model(ollama_api_url))
-            gemini_api_key = get_setting('gemini_api_key', '')
+            ollama_api_url = settings['ollama_api_url']
+            ollama_model = settings['ollama_model'] or self._get_cached_model(ollama_api_url)
+            gemini_api_key = settings['gemini_api_key']
             
             system_prompt = (
                 "Anda adalah Diana — seorang android perempuan muda yang misterius dari masa depan. "
@@ -178,9 +232,9 @@ class SimpleLocalAI:
                 if translator.is_english(ai_res):
                     ai_res = translator.translate(ai_res)
                 
-                # Simpan ke otak Diana (Learning)
+                # Simpan ke otak Diana (Learning) — lazy reload
                 add_new_intent(user_input, ai_res)
-                self.load_knowledge()
+                self._mark_knowledge_dirty()
                 
                 # Terapkan kepribadian Diana ke jawaban AI
                 final_res = self._apply_personality(ai_res)
@@ -201,7 +255,6 @@ class SimpleLocalAI:
             new_answer = user_input[correction_match.start(2):].strip()
             if new_answer:
                 pattern = f"\\b({re.escape(self.last_query.lower())})\\b"
-                from database.db_manager import add_new_intent
                 add_new_intent(pattern, new_answer)
                 self.load_knowledge()
                 return f"Maaf atas ketidakakuratan data saya. Saya telah memperbarui memori saya. '{self.last_query}' sekarang berarti '{new_answer}'. Sinkronisasi selesai."
@@ -389,12 +442,11 @@ class SimpleLocalAI:
             return self._process_response(match, self.responses[best_pattern])
 
         # Persiapan System Prompt untuk AI Fallback (Persona Diana - Pragmata)
-        from database.db_manager import get_setting
-        fallback_brain = get_setting('fallback_brain', 'ollama')
-        gemini_api_key = get_setting('gemini_api_key', '')
-        ollama_enabled = get_setting('ollama_enabled', 'true') == 'true'
-        ollama_api_url = get_setting('ollama_api_url', 'http://localhost:11434')
-        ollama_model = get_setting('ollama_model', get_first_available_model(ollama_api_url))
+        fallback_brain = settings['fallback_brain']
+        gemini_api_key = settings['gemini_api_key']
+        ollama_enabled = settings['ollama_enabled'] == 'true'
+        ollama_api_url = settings['ollama_api_url']
+        ollama_model = settings['ollama_model'] or self._get_cached_model(ollama_api_url)
         
         system_prompt = (
             "Anda adalah Diana — seorang android perempuan muda yang misterius dari masa depan, karakter dari game Pragmata oleh Capcom. "
@@ -465,17 +517,13 @@ class SimpleLocalAI:
             ai_res = services.gemini_service.ask_gemini(user_input, api_key=gemini_api_key, system=system_prompt)
             used_brain = "Gemini"
         elif fallback_brain == 'ollama' and ollama_enabled:
-            # Perbaikan otomatis (Self-heal): Jika di database masih tersetting model yang tidak ada di PC, ubah ke model pertama yang tersedia
-            from services.ollama_service import list_ollama_models
-            from database.db_manager import get_setting
-            models_path = get_setting('ollama_models_path', '').strip()
-            available_models = list_ollama_models(base_url=ollama_api_url, models_path=models_path)
-            
-            if not ollama_model or ollama_model == 'custom' or (available_models and ollama_model not in available_models):
+            # Self-heal hanya jika model kosong atau 'custom'
+            if not ollama_model or ollama_model == 'custom':
                 from database.db_manager import update_setting
-                new_model = get_first_available_model(ollama_api_url)
-                update_setting('ollama_model', new_model)
-                ollama_model = new_model
+                new_model = self._get_cached_model(ollama_api_url)
+                if new_model:
+                    update_setting('ollama_model', new_model)
+                    ollama_model = new_model
                 
             print(f"DEBUG: Menanyakan ke Ollama ({ollama_model})...")
             import services.ollama_service
@@ -490,9 +538,8 @@ class SimpleLocalAI:
 
             # Diana Belajar: Simpan ke SQLite
             print(f"DEBUG: Diana belajar hal baru dari {used_brain}: {user_input} -> {ai_res}")
-            from database.db_manager import add_new_intent
             add_new_intent(user_input, ai_res)
-            self.load_knowledge() # Refresh agar langsung ingat
+            self._mark_knowledge_dirty()  # Lazy reload untuk performa
             self.last_query = query_before_process
             self.last_source = f"Otak Cadangan: {used_brain}"
             return f"👁️ *Analisis Diana:* {ai_res}"
@@ -550,10 +597,10 @@ class SimpleLocalAI:
             
             # Tambahkan bumbu percakapan secara acak (30% kemungkinan)
             if random.random() < 0.3 and not response.startswith("["):
-                intro = random.choice(intros)
-                if intro:
+                mood_intro = self._get_mood_intro(user_input_low)
+                if mood_intro:
                     # Pastikan huruf pertama respon jadi kecil jika ada intro
-                    response = intro + response[0].lower() + response[1:]
+                    response = mood_intro + response[0].lower() + response[1:]
             
         # Jika respons berbentuk fungsi (legacy python fallback)
         if callable(response):

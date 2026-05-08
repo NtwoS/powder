@@ -255,6 +255,12 @@
 				50% { border-color: rgba(234, 179, 8, 0.8); }
 				100% { border-color: rgba(234, 179, 8, 0.3); }
 			}
+		.conv-active {
+			background: rgba(0, 242, 255, 0.08) !important;
+		}
+		.conv-active span {
+			color: var(--primary) !important;
+		}
 		</style>
 	</head>
 	<body>
@@ -693,6 +699,7 @@
 			let currentMode = 'chat'; // 'chat' or 'train'
 			let trainingState = 'idle'; // 'idle', 'trigger', 'response'
 			let tempTrigger = '';
+			let currentConversationId = null; // ID percakapan aktif
 
 			function showView(viewName) {
 				const views = {
@@ -728,12 +735,12 @@
 			btnNewChat.addEventListener('click', () => {
 				currentMode = 'chat';
 				trainingState = 'idle';
-				container.innerHTML = `
-					<div class="message system">
-						<p>Percakapan baru dimulai. Ada yang bisa saya bantu?</p>
-					</div>
-				`;
+				currentConversationId = null; // Reset — conversation baru akan dibuat saat pesan pertama
+				container.innerHTML = '';
+				document.getElementById('empty-state').style.display = 'flex';
 				showView('chat');
+				// Hapus highlight aktif dari sidebar history
+				document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('conv-active'));
 			});
 			btnSkills.addEventListener('click', () => showView('skills'));
 			btnAdminPanel.addEventListener('click', () => showView('admin'));
@@ -1512,102 +1519,77 @@
 			document.getElementById('btn-full-ai-gemini').addEventListener('click', () => setFullAiMode('gemini'));
 			document.getElementById('btn-full-ai-off').addEventListener('click', () => setFullAiMode('off'));
 
-			// Load Chat History from Database
+			// Load Conversations for Sidebar
 			async function loadHistory() {
 				try {
-					const res = await fetch('http://127.0.0.1:5050/history');
+					const res = await fetch('http://127.0.0.1:5050/conversations');
 					const data = await res.json();
 					
 					const sidebarHistory = document.getElementById('sidebar-history');
-					sidebarHistory.innerHTML = ''; // Clear hardcoded history
+					sidebarHistory.innerHTML = '';
 
-					if (data.history && data.history.length > 0) {
-						// Ambil 10 pesan User terakhir untuk Sidebar
-						const userMessages = data.history.filter(h => h.sender === 'user').slice(-10).reverse();
-						userMessages.forEach(h => {
-							const itemContainer = document.createElement('div');
-							itemContainer.style.display = 'flex';
-							itemContainer.style.alignItems = 'center';
-							itemContainer.style.justifyContent = 'space-between';
-							itemContainer.style.padding = '4px 8px';
-							itemContainer.style.borderRadius = '6px';
-							itemContainer.style.transition = 'background 0.2s';
-							itemContainer.className = 'history-item-container';
+					if (data.conversations && data.conversations.length > 0) {
+						data.conversations.forEach(conv => {
+							const item = document.createElement('div');
+							item.className = 'conv-item';
+							item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.2s;gap:6px;';
+							if (conv.id === currentConversationId) item.classList.add('conv-active');
 
-							const itemText = document.createElement('div');
-							itemText.style.color = '#707070';
-							itemText.style.fontSize = '0.85rem';
-							itemText.style.cursor = 'pointer';
-							itemText.style.flex = '1';
-							itemText.textContent = h.message.length > 18 ? h.message.substring(0, 18) + '...' : h.message;
-							
-							const actions = document.createElement('div');
-							actions.style.display = 'flex';
-							actions.style.gap = '6px';
-							actions.style.opacity = '0.4';
+							const title = document.createElement('span');
+							title.style.cssText = 'color:#888;font-size:0.82rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+							title.textContent = conv.title;
 
-							// Button Lock
-							const btnLock = document.createElement('button');
-							btnLock.style.background = 'transparent';
-							btnLock.style.border = 'none';
-							btnLock.style.cursor = 'pointer';
-							btnLock.style.color = h.is_locked ? 'var(--primary)' : '#555';
-							btnLock.innerHTML = h.is_locked 
-								? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
-								: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>';
-							
-							btnLock.addEventListener('click', async (e) => {
+							const btnDel = document.createElement('button');
+							btnDel.style.cssText = 'background:transparent;border:none;cursor:pointer;color:#444;padding:2px;opacity:0;transition:opacity 0.2s;';
+							btnDel.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+							btnDel.addEventListener('click', async (e) => {
 								e.stopPropagation();
-								await fetch(`http://127.0.0.1:5050/history/lock/${h.id}`, { method: 'POST' });
+								await fetch(`http://127.0.0.1:5050/conversations/${conv.id}`, { method: 'DELETE' });
+								if (currentConversationId === conv.id) {
+									currentConversationId = null;
+									container.innerHTML = '';
+									document.getElementById('empty-state').style.display = 'flex';
+								}
 								loadHistory();
 							});
 
-							// Button Delete Individual
-							const btnDel = document.createElement('button');
-							btnDel.style.background = 'transparent';
-							btnDel.style.border = 'none';
-							btnDel.style.cursor = 'pointer';
-							btnDel.style.color = '#555';
-							btnDel.style.display = h.is_locked ? 'none' : 'block';
-							btnDel.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-							
-							btnDel.addEventListener('click', async (e) => {
-								e.stopPropagation();
-								if (confirm('Hapus item ini?')) {
-									await fetch(`http://127.0.0.1:5050/history/delete/${h.id}`, { method: 'POST' });
-									loadHistory();
-								}
-							});
-
-							itemText.addEventListener('click', () => {
+							// Klik untuk memuat percakapan
+							title.addEventListener('click', async () => {
+								currentConversationId = conv.id;
 								container.innerHTML = '';
-								data.history.forEach(chat => addMessage(chat.message, chat.sender));
-							});
-							
-							itemContainer.addEventListener('mouseenter', () => {
-								itemContainer.style.background = 'rgba(255,255,255,0.05)';
-								actions.style.opacity = '1';
-							});
-							itemContainer.addEventListener('mouseleave', () => {
-								itemContainer.style.background = 'transparent';
-								actions.style.opacity = '0.4';
+								document.getElementById('empty-state').style.display = 'none';
+								showView('chat');
+								// Highlight aktif
+								document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('conv-active'));
+								item.classList.add('conv-active');
+								// Muat pesan
+								try {
+									const msgRes = await fetch(`http://127.0.0.1:5050/conversations/${conv.id}/messages`);
+									const msgData = await msgRes.json();
+									if (msgData.messages) {
+										msgData.messages.forEach(m => addMessage(m.message, m.sender));
+									}
+								} catch(err) { console.error('Gagal memuat pesan:', err); }
 							});
 
-							actions.appendChild(btnLock);
-							actions.appendChild(btnDel);
-							itemContainer.appendChild(itemText);
-							itemContainer.appendChild(actions);
-							sidebarHistory.appendChild(itemContainer);
-						});
+							item.addEventListener('mouseenter', () => {
+								item.style.background = 'rgba(255,255,255,0.05)';
+								btnDel.style.opacity = '1';
+							});
+							item.addEventListener('mouseleave', () => {
+								if (!item.classList.contains('conv-active')) item.style.background = 'transparent';
+								btnDel.style.opacity = '0';
+							});
 
-						// Tampilkan history di main chat saat startup
-						container.innerHTML = '';
-						data.history.forEach(chat => {
-							addMessage(chat.message, chat.sender);
+							item.appendChild(title);
+							item.appendChild(btnDel);
+							sidebarHistory.appendChild(item);
 						});
+					} else {
+						sidebarHistory.innerHTML = '<div style="color:#444;font-size:0.75rem;padding:8px 10px;">Belum ada percakapan</div>';
 					}
 				} catch (err) {
-					console.error("Gagal memuat history:", err);
+					console.error("Gagal memuat conversations:", err);
 				}
 			}
 
@@ -1615,7 +1597,13 @@
 			btnClearHistory.addEventListener('click', async () => {
 				if (confirm('Hapus seluruh riwayat percakapan?')) {
 					try {
-						await fetch('http://127.0.0.1:5050/history/clear', { method: 'POST' });
+						// Hapus semua conversations
+						const res = await fetch('http://127.0.0.1:5050/conversations');
+						const data = await res.json();
+						for (const conv of data.conversations) {
+							await fetch(`http://127.0.0.1:5050/conversations/${conv.id}`, { method: 'DELETE' });
+						}
+						currentConversationId = null;
 						container.innerHTML = '';
 						document.getElementById('empty-state').style.display = 'flex';
 						loadHistory();
@@ -1626,7 +1614,7 @@
 			});
 
 			checkStatus();
-			loadHistory(); // Panggil history saat startup
+			loadHistory();
 			setInterval(checkStatus, 5000);
 
 			// File Analysis Logic
@@ -1694,10 +1682,16 @@
 					const res = await fetch('http://127.0.0.1:5050/chat', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ message: msg })
+						body: JSON.stringify({ message: msg, conversation_id: currentConversationId })
 					});
 					const data = await res.json();
 					addMessage(data.response, 'bot');
+					
+					// Simpan conversation_id dari response (untuk pesan pertama yang auto-create)
+					if (data.conversation_id && !currentConversationId) {
+						currentConversationId = data.conversation_id;
+						loadHistory(); // Refresh sidebar untuk tampilkan conversation baru
+					}
 					
 					if (data.user_name) {
 						userNameDisplay.textContent = data.user_name;

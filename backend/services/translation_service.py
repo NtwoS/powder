@@ -1,6 +1,7 @@
 import socket
 import logging
 import os
+import time
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -10,14 +11,24 @@ logger = logging.getLogger("TranslationService")
 argos_installed = False
 tried_init = False
 
+# Cache untuk internet check (hemat 2 detik per panggilan)
+_internet_cache = {"status": None, "last_check": 0}
+_INTERNET_CACHE_TTL = 60  # Cache selama 60 detik
+
 def check_internet():
-    """Mengecek apakah ada koneksi internet."""
+    """Mengecek apakah ada koneksi internet (dengan cache 60 detik)."""
+    now = time.time()
+    if now - _internet_cache["last_check"] < _INTERNET_CACHE_TTL and _internet_cache["status"] is not None:
+        return _internet_cache["status"]
+    
     try:
-        # Menghubungi DNS Google untuk cek koneksi
-        socket.create_connection(("8.8.8.8", 53), timeout=2)
-        return True
+        socket.create_connection(("8.8.8.8", 53), timeout=1.5)
+        _internet_cache["status"] = True
     except (OSError, socket.timeout):
-        return False
+        _internet_cache["status"] = False
+    
+    _internet_cache["last_check"] = now
+    return _internet_cache["status"]
 
 def init_offline_translator():
     """Inisialisasi Argos Translate (Offline)."""

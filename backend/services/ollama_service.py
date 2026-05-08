@@ -92,7 +92,7 @@ def ask_ollama(prompt, model=None, system=None, options=None, base_url="http://l
         payload["options"] = options
 
     try:
-        response = requests.post(url, json=payload, timeout=None)
+        response = requests.post(url, json=payload, timeout=60)
         if response.status_code == 200:
             data = response.json()
             return data.get("response", "").strip()

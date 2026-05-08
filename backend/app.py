@@ -9,7 +9,9 @@ CORS(app) # Mengizinkan Astro (frontend) mengakses API ini
 from database.db_manager import (
     init_db, save_chat_message, get_chat_history, update_history_duration,
     get_all_intents, add_new_intent, clear_chat_history,
-    delete_chat_message, toggle_chat_lock, get_setting, delete_intents_bulk
+    delete_chat_message, toggle_chat_lock, get_setting, delete_intents_bulk,
+    create_conversation, get_conversations, get_conversation_messages,
+    delete_conversation, update_conversation_title
 )
 from services.ollama_service import ask_ollama, list_ollama_models
 
@@ -105,27 +107,33 @@ ai = SimpleLocalAI()
 def chat():
     data = request.json
     user_input = data.get('message', '')
+    conversation_id = data.get('conversation_id')
     
     if not user_input:
         return jsonify({"response": "Pesan kosong."}), 400
     
+    # Auto-create conversation jika belum ada
+    if not conversation_id:
+        title = user_input[:40] + ('...' if len(user_input) > 40 else '')
+        conversation_id = create_conversation(title)
+    
     # Simpan pesan User ke DB
-    save_chat_message("user", user_input)
+    save_chat_message("user", user_input, conversation_id)
     
     # Mendapatkan respon dari AI
-    # Jika menggunakan Ollama, perbarui URL dari setting
     if hasattr(ai, 'base_url'):
         ai.base_url = get_setting('ollama_api_url', 'http://localhost:11434')
         
     response = ai.respond(user_input)
     
     # Simpan respon Bot ke DB
-    save_chat_message("bot", response)
+    save_chat_message("bot", response, conversation_id)
     
     return jsonify({
         "response": response,
         "user_name": ai.user_name,
-        "bot_name": ai.name
+        "bot_name": ai.name,
+        "conversation_id": conversation_id
     })
 
 # --- ADMIN PANEL ENDPOINTS ---
@@ -438,6 +446,34 @@ def delete_history_item(msg_id):
 def lock_history_item(msg_id):
     """Mengunci/membuka kunci item riwayat chat."""
     toggle_chat_lock(msg_id)
+    return jsonify({"success": True})
+
+# --- CONVERSATION ENDPOINTS ---
+
+@app.route('/conversations', methods=['GET'])
+def list_conversations():
+    """Mengambil daftar semua percakapan."""
+    convs = get_conversations()
+    return jsonify({"conversations": convs})
+
+@app.route('/conversations', methods=['POST'])
+def new_conversation():
+    """Membuat percakapan baru."""
+    data = request.json or {}
+    title = data.get('title', 'Percakapan Baru')
+    conv_id = create_conversation(title)
+    return jsonify({"success": True, "conversation_id": conv_id})
+
+@app.route('/conversations/<int:conv_id>/messages', methods=['GET'])
+def conversation_messages(conv_id):
+    """Mengambil semua pesan dari percakapan tertentu."""
+    messages = get_conversation_messages(conv_id)
+    return jsonify({"messages": messages})
+
+@app.route('/conversations/<int:conv_id>', methods=['DELETE'])
+def remove_conversation(conv_id):
+    """Menghapus percakapan."""
+    delete_conversation(conv_id)
     return jsonify({"success": True})
 
 # --- AUTO LEARNING ENDPOINTS ---
