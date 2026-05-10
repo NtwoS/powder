@@ -4,9 +4,9 @@ title Diana AI - Shutdown
 color 0C
 
 echo.
-echo  ╔══════════════════════════════════════════════╗
-echo  ║       MEMATIKAN DIANA AI...                  ║
-echo  ╚══════════════════════════════════════════════╝
+echo  +==============================================+
+echo  ^|       MEMATIKAN DIANA AI...                  ^|
+echo  +==============================================+
 echo.
 
 :: Kill Backend (Python di port 5050)
@@ -30,14 +30,14 @@ taskkill /FI "WINDOWTITLE eq Diana AI - Frontend" /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq Diana AI - Master Launcher" /F >nul 2>&1
 
 echo.
-echo  ╔══════════════════════════════════════════════╗
-echo  ║       DIANA AI BERHASIL DIMATIKAN            ║
-echo  ║                                              ║
-echo  ║  Backend  : Stopped                          ║
-echo  ║  Frontend : Stopped                          ║
-echo  ║                                              ║
-echo  ║  Untuk menyalakan kembali: run_diana.bat     ║
-echo  ╚══════════════════════════════════════════════╝
+echo  +==============================================+
+echo  ^|       DIANA AI BERHASIL DIMATIKAN            ^|
+echo  ^|                                              ^|
+echo  ^|  Backend  : Stopped                          ^|
+echo  ^|  Frontend : Stopped                          ^|
+echo  ^|                                              ^|
+echo  ^|  Untuk menyalakan kembali: run_diana.bat     ^|
+echo  +==============================================+
 echo.
 timeout /t 5
 exit

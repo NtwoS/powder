@@ -478,12 +478,13 @@
 						</div>
 
 						<!-- Card Auto Learning -->
-						<div class="job-card clickable-card" id="btn-show-autolearn">
-							<div class="p-icon">🤖</div>
-							<h4>Auto Learning</h4>
-							<p>Biarkan Diana bertapa dan belajar sendiri.</p>
-							<div class="status-badge" id="badge-autolearn" style="background: #64748b;">Mati</div>
-						</div>
+						<div class="job-card clickable-card" id="btn-show-autolearn" style="position: relative; overflow: hidden;">
+						<div class="p-icon">🤖</div>
+						<h4>Auto Learning</h4>
+						<p>Biarkan Diana belajar mandiri dengan cepat.</p>
+						<div class="status-badge" id="badge-autolearn" style="background: #64748b;">Mati</div>
+						<div id="card-autolearn-speed" style="display: none; font-size: 0.7rem; color: #10b981; margin-top: 6px; font-weight: 600;"></div>
+					</div>
 					</div>
 
 					<!-- Brain Sub-Menu -->
@@ -564,82 +565,154 @@
 
 					<!-- Auto Learning Sub-Menu (Hidden by default) -->
 					<div class="personality-section" id="autolearn-sub-menu" style="display: none;">
-						<div class="section-header" style="margin-bottom: 40px; border-bottom: 1px solid var(--glass); padding-bottom: 20px;">
-							<button class="btn-back" id="btn-back-autolearn">
-								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-								Kembali
-							</button>
-							<h3 style="font-size: 1.6rem; margin-left: 10px;">Latihan Mandiri (Auto Learning)</h3>
+					<div class="section-header" style="margin-bottom: 30px; border-bottom: 1px solid var(--glass); padding-bottom: 20px;">
+						<button class="btn-back" id="btn-back-autolearn">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+							Kembali
+						</button>
+						<h3 style="font-size: 1.6rem; margin-left: 10px;">Latihan Mandiri (Auto Learning)</h3>
+					</div>
+
+					<div style="display: block; width: 95%; max-width: 2000px; margin: 0 auto;">
+						<!-- Live Stats Dashboard (hidden when inactive) -->
+						<div id="autolearn-stats-dashboard" style="display: none; margin-bottom: 30px; padding: 24px; background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(129,140,248,0.08)); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px;">
+							<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+								<span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; animation: pulse-yellow 1.5s infinite;"></span>
+								<h4 style="font-size: 1rem; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Statistik Live</h4>
+							</div>
+							<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
+								<div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 14px; text-align: center;">
+									<div id="stat-saved" style="font-size: 1.8rem; font-weight: 800; color: #10b981;">0</div>
+									<div style="font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Tersimpan</div>
+								</div>
+								<div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 14px; text-align: center;">
+									<div id="stat-speed" style="font-size: 1.8rem; font-weight: 800; color: #818cf8;">0</div>
+									<div style="font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Items/Menit</div>
+								</div>
+								<div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 14px; text-align: center;">
+									<div id="stat-batches" style="font-size: 1.8rem; font-weight: 800; color: #f59e0b;">0</div>
+									<div style="font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Batch</div>
+								</div>
+								<div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 14px; text-align: center;">
+									<div id="stat-errors" style="font-size: 1.8rem; font-weight: 800; color: #ef4444;">0</div>
+									<div style="font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Error</div>
+								</div>
+							</div>
 						</div>
 
-						<div class="settings-card" style="display: block; width: 95%; max-width: 2000px; margin: 0 auto; padding: 60px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px;">
-							<p style="color: var(--text-dim); font-size: 1.1rem; line-height: 1.6; margin-bottom: 35px; text-align: center;">
-								Diana akan terus-menerus bertanya kepada Ollama untuk mencari pengetahuan baru selama durasi yang ditentukan secara otomatis.
+						<div style="padding: 40px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px;">
+							<p style="color: var(--text-dim); font-size: 1rem; line-height: 1.6; margin-bottom: 30px; text-align: center;">
+								Diana akan secara otomatis mencari dan menyerap pengetahuan baru dari model Ollama. Hasil langsung masuk ke database otak Diana.
 							</p>
 
-							<div class="input-group" style="display: flex; flex-direction: column; gap: 25px; margin-bottom: 40px;">
-								<div style="display: flex; flex-direction: column; gap: 10px;">
-									<label style="font-size: 0.9rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Topik Spesifik (Opsional)</label>
-									<input type="text" id="input-autolearn-topic" placeholder="Contoh: Fisika Kuantum, Sejarah Indonesia, AI..." style="padding: 16px; font-size: 1.1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.3s;">
+							<div style="display: flex; flex-direction: column; gap: 22px; margin-bottom: 30px;">
+								<!-- Topik -->
+								<div style="display: flex; flex-direction: column; gap: 8px;">
+									<label style="font-size: 0.8rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Topik Spesifik (Opsional)</label>
+									<input type="text" id="input-autolearn-topic" placeholder="Contoh: Fisika Kuantum, Sejarah Indonesia, AI..." style="padding: 14px; font-size: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.3s;">
 								</div>
-								
-								<div style="display: flex; flex-direction: column; gap: 10px;">
-									<label style="font-size: 0.9rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Pilih Model Ollama</label>
+
+								<!-- Model Ollama -->
+								<div style="display: flex; flex-direction: column; gap: 8px;">
+									<label style="font-size: 0.8rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Pilih Model Ollama</label>
 									<div style="display: flex; gap: 10px;">
-										<select id="select-autolearn-model" style="flex: 1; padding: 16px; font-size: 1.1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); outline: none; cursor: pointer;">
+										<select id="select-autolearn-model" style="flex: 1; padding: 14px; font-size: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); outline: none; cursor: pointer;">
 											<option value="">Mendeteksi model...</option>
 										</select>
-										<button id="btn-run-ollama" title="Jalankan di Terminal" style="background: #2a2a2a; color: var(--primary); border: 1px solid var(--primary); padding: 0 20px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
-											<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+										<button id="btn-run-ollama" title="Jalankan di Terminal" style="background: #2a2a2a; color: var(--primary); border: 1px solid var(--primary); padding: 0 18px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+											<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
 											Run
 										</button>
 									</div>
-									<input type="text" id="input-autolearn-custom-model" placeholder="Ketik nama model (cth: mistral, phi3...)" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--primary); background: #1a1a1a; color: var(--text); width: 100%; box-sizing: border-box; outline: none; margin-top: 10px; display: none;">
-									
-									<!-- Fitur Browse Path Baru -->
-									<div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-										<label style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Lokasi Model (Opsional)</label>
+									<input type="text" id="input-autolearn-custom-model" placeholder="Ketik nama model (cth: mistral, phi3...)" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--primary); background: #1a1a1a; color: var(--text); width: 100%; box-sizing: border-box; outline: none; margin-top: 6px; display: none;">
+
+									<!-- Lokasi Model -->
+									<div style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+										<label style="display: block; margin-bottom: 8px; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Lokasi Model (Opsional)</label>
 										<div style="display: flex; gap: 8px;">
 											<input type="text" id="input-autolearn-path" placeholder="Default Ollama Path" style="flex: 1; padding: 10px; font-size: 0.9rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #111; color: var(--text); outline: none;">
 											<button id="btn-browse-autolearn" title="Pilih Folder" style="background: #333; color: white; border: 1px solid rgba(255,255,255,0.1); padding: 0 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-												<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
 											</button>
 										</div>
 									</div>
 								</div>
 
-								<div style="display: flex; flex-direction: column; gap: 10px;">
-									<label style="font-size: 0.9rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Durasi Latihan</label>
-									<div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-										<div id="duration-input-wrapper" style="display: flex; gap: 10px; align-items: center;">
-											<input type="number" id="input-autolearn-mins" value="15" min="1" max="120" style="padding: 16px; font-size: 1.2rem; font-weight: bold; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--primary); width: 100px; text-align: center; outline: none;">
-											<span style="font-size: 1.2rem; font-weight: 600; color: var(--text);">Menit</span>
+								<!-- Pengaturan Performa (BARU) -->
+								<div style="background: rgba(129,140,248,0.05); border: 1px solid rgba(129,140,248,0.15); border-radius: 16px; padding: 20px;">
+									<h4 style="font-size: 0.85rem; color: #818cf8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+										Pengaturan Performa
+									</h4>
+									<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+										<!-- Batch Size -->
+										<div style="display: flex; flex-direction: column; gap: 6px;">
+											<label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Batch Size</label>
+											<div style="display: flex; align-items: center; gap: 10px;">
+												<input type="range" id="input-autolearn-batch" min="3" max="20" value="10" style="flex: 1; accent-color: #818cf8;">
+												<span id="label-batch-size" style="font-size: 1.1rem; font-weight: 700; color: #818cf8; min-width: 30px; text-align: center;">10</span>
+											</div>
+											<span style="font-size: 0.65rem; color: #555;">Jumlah Q&A per siklus</span>
 										</div>
-										
-										<div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="document.getElementById('check-infinite').click()">
-											<input type="checkbox" id="check-infinite" style="width: 20px; height: 20px; cursor: pointer;">
-											<span style="font-size: 0.9rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 1px;">Tanpa Batas Waktu</span>
+										<!-- Delay -->
+										<div style="display: flex; flex-direction: column; gap: 6px;">
+											<label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Jeda Antar Batch</label>
+											<div style="display: flex; align-items: center; gap: 10px;">
+												<input type="range" id="input-autolearn-delay" min="0.5" max="10" step="0.5" value="1" style="flex: 1; accent-color: #818cf8;">
+												<span id="label-delay" style="font-size: 1.1rem; font-weight: 700; color: #818cf8; min-width: 35px; text-align: center;">1s</span>
+											</div>
+											<span style="font-size: 0.65rem; color: #555;">Detik jeda antar siklus</span>
+										</div>
+									</div>
+									<!-- Max Variasi -->
+									<div style="margin-top: 14px; display: flex; align-items: center; gap: 12px;">
+										<label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Maks Variasi Jawaban</label>
+										<select id="input-autolearn-variations" style="padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--text); font-size: 0.9rem; outline: none; cursor: pointer;">
+											<option value="1">1 (Tanpa Variasi)</option>
+											<option value="3">3 Variasi</option>
+											<option value="5" selected>5 Variasi (Disarankan)</option>
+											<option value="10">10 Variasi</option>
+										</select>
+									</div>
+								</div>
+
+								<!-- Durasi Latihan -->
+								<div style="display: flex; flex-direction: column; gap: 8px;">
+									<label style="font-size: 0.8rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Durasi Latihan</label>
+									<div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+										<div id="duration-input-wrapper" style="display: flex; gap: 10px; align-items: center;">
+											<input type="number" id="input-autolearn-mins" value="15" min="1" max="120" style="padding: 14px; font-size: 1.2rem; font-weight: bold; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: var(--primary); width: 90px; text-align: center; outline: none;">
+											<span style="font-size: 1.1rem; font-weight: 600; color: var(--text);">Menit</span>
+										</div>
+
+										<div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 10px 18px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="document.getElementById('check-infinite').click()">
+											<input type="checkbox" id="check-infinite" style="width: 18px; height: 18px; cursor: pointer;">
+											<span style="font-size: 0.85rem; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 1px;">Tanpa Batas</span>
 										</div>
 									</div>
 								</div>
 							</div>
 
-							<div style="display: flex; flex-direction: column; gap: 15px;">
-								<button class="btn-save" id="btn-start-autolearn" style="width: 100%; padding: 20px; font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 16px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); transition: all 0.3s;">Mulai Latihan 🚀</button>
-								<button class="btn-save" id="btn-stop-autolearn" style="width: 100%; padding: 20px; font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-radius: 16px; display: none;">Hentikan Latihan 🛑</button>
+							<!-- Action Buttons -->
+							<div style="display: flex; flex-direction: column; gap: 12px;">
+								<button class="btn-save" id="btn-start-autolearn" style="width: 100%; padding: 18px; font-size: 1.15rem; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 16px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2); transition: all 0.3s; letter-spacing: 0.5px;">Mulai Latihan 🚀</button>
+								<button class="btn-save" id="btn-stop-autolearn" style="width: 100%; padding: 18px; font-size: 1.15rem; font-weight: 800; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-radius: 16px; display: none; letter-spacing: 0.5px;">Hentikan Latihan 🛑</button>
 							</div>
 
-							<div id="autolearn-status-text" style="margin-top: 25px; text-align: center; font-size: 1.1rem; font-weight: bold; color: #10b981; display: none; letter-spacing: 0.5px;">
+							<!-- Status Text -->
+							<div id="autolearn-status-text" style="margin-top: 20px; text-align: center; font-size: 1.05rem; font-weight: bold; color: #10b981; display: none; letter-spacing: 0.5px;">
 								<span class="pulse" style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; margin-right: 10px;"></span>
 								Sedang Berlatih... Sisa Waktu: --:--
 							</div>
 
-							<div id="autolearn-report" style="margin-top: 35px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; display: none;">
-								<h4 style="margin-bottom: 15px; color: var(--primary); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Laporan Sinkronisasi:</h4>
-								<ul id="autolearn-report-list" style="color: var(--text-dim); font-size: 1rem; line-height: 1.5; padding-left: 20px; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+							<!-- Report -->
+							<div id="autolearn-report" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; display: none;">
+								<h4 style="margin-bottom: 12px; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Laporan Pembelajaran:</h4>
+								<ul id="autolearn-report-list" style="color: var(--text-dim); font-size: 0.95rem; line-height: 1.5; padding-left: 20px; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
 								</ul>
 							</div>
 						</div>
+					</div>
 					</div>
 				</div>
 			</main>
@@ -955,6 +1028,28 @@
 					inputLearnCustomModel.style.display = 'none';
 				}
 			});
+
+			// New performance control elements
+			const inputBatchSize = document.getElementById('input-autolearn-batch');
+			const inputDelay = document.getElementById('input-autolearn-delay');
+			const inputVariations = document.getElementById('input-autolearn-variations');
+			const labelBatchSize = document.getElementById('label-batch-size');
+			const labelDelay = document.getElementById('label-delay');
+			const statsDashboard = document.getElementById('autolearn-stats-dashboard');
+			const cardAutoSpeed = document.getElementById('card-autolearn-speed');
+
+			// Slider live labels
+			if (inputBatchSize) {
+				inputBatchSize.addEventListener('input', () => {
+					labelBatchSize.textContent = inputBatchSize.value;
+				});
+			}
+			if (inputDelay) {
+				inputDelay.addEventListener('input', () => {
+					labelDelay.textContent = inputDelay.value + 's';
+				});
+			}
+
 			let autolearnInterval = null;
 			let notificationsEnabled = true;
 			let newItemsCount = 0;
@@ -1051,6 +1146,21 @@
 							statusText.innerHTML = `<span class="pulse" style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; margin-right: 10px;"></span>Sedang Berlatih... Sisa Waktu: ${data.time_remaining}`;
 						}
 						
+						// Update live stats dashboard
+						if (data.session_stats && statsDashboard) {
+							statsDashboard.style.display = 'block';
+							const s = data.session_stats;
+							document.getElementById('stat-saved').textContent = s.total_saved || 0;
+							document.getElementById('stat-speed').textContent = s.items_per_minute || 0;
+							document.getElementById('stat-batches').textContent = s.batches_completed || 0;
+							document.getElementById('stat-errors').textContent = s.total_errors || 0;
+							// Update speed on card too
+							if (cardAutoSpeed) {
+								cardAutoSpeed.style.display = 'block';
+								cardAutoSpeed.textContent = `⚡ ${s.items_per_minute || 0} items/menit`;
+							}
+						}
+						
 						if (!autolearnInterval) {
 							autolearnInterval = setInterval(updateAutolearnStatus, 2000);
 						}
@@ -1060,6 +1170,7 @@
 						statusText.style.display = 'none';
 						badgeAutolearn.textContent = "Mati";
 						badgeAutolearn.style.background = "#64748b";
+						if (cardAutoSpeed) cardAutoSpeed.style.display = 'none';
 						if (autolearnInterval) {
 							clearInterval(autolearnInterval);
 							autolearnInterval = null;
@@ -1111,7 +1222,10 @@
 						body: JSON.stringify({ 
 							minutes: mins, 
 							topic: topic,
-							model_name: modelName
+							model_name: modelName,
+							batch_size: inputBatchSize ? parseInt(inputBatchSize.value) : 10,
+							delay_seconds: inputDelay ? parseFloat(inputDelay.value) : 1.0,
+							max_variations: inputVariations ? parseInt(inputVariations.value) : 5
 						})
 					});
 					const data = await res.json();

@@ -194,6 +194,49 @@ def add_new_intent(pattern, response_data):
     conn.commit()
     conn.close()
 
+def append_intent_response(pattern, new_response, max_variations=5):
+    """Menambahkan variasi jawaban baru ke pattern yang sudah ada.
+    Jika pattern belum ada, buat baru. Jika sudah ada, tambahkan variasi.
+    max_variations: batas maksimal variasi jawaban per pattern.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT responses FROM intents WHERE pattern = ?', (pattern,))
+    row = cursor.fetchone()
+    
+    if row:
+        existing = json.loads(row[0])
+        # Cek duplikat — jangan tambah jika jawaban sudah ada (case-insensitive)
+        existing_lower = [r.lower().strip() for r in existing]
+        if new_response.lower().strip() not in existing_lower:
+            existing.append(new_response)
+            # Batasi jumlah variasi agar tidak terlalu banyak
+            if len(existing) > max_variations:
+                existing = existing[-max_variations:]
+            cursor.execute('UPDATE intents SET responses = ? WHERE pattern = ?', 
+                           (json.dumps(existing), pattern))
+    else:
+        cursor.execute('INSERT INTO intents (pattern, responses) VALUES (?, ?)', 
+                       (pattern, json.dumps([new_response])))
+        # Tambahkan kosa kata baru ke vocabulary
+        words = pattern.replace('\\b', '').replace('(', '').replace(')', '').replace('|', ' ').split()
+        for word in words:
+            if len(word) > 1:
+                cursor.execute('INSERT OR IGNORE INTO vocabulary (word) VALUES (?)', (word.lower(),))
+    
+    conn.commit()
+    conn.close()
+
+def check_intent_exists(pattern):
+    """Mengecek apakah sebuah pattern sudah ada di database."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM intents WHERE pattern = ?', (pattern,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count > 0
+
 def delete_intents_bulk(patterns):
     """Menghapus banyak pola sekaligus."""
     if not patterns:

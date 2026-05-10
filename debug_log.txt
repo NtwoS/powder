@@ -1,0 +1,7 @@
+[DEBUG] Script dimulai... 
+ROOT_DIR = D:\Ahmad\Projek Powder\powder AI\DianaAI\ 
+Python 3.12.10
+Python errorlevel: 0 
+v22.18.0
+Node errorlevel: 0 
+10.9.3

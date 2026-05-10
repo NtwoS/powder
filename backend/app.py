@@ -485,7 +485,16 @@ def auto_learning_start():
     minutes = int(data.get('minutes', 15))
     topic = data.get('topic', "").strip()
     model_name = data.get('model_name') # Bisa None
-    success, message = start_learning(minutes, topic, model_name)
+    batch_size = int(data.get('batch_size', 10))
+    delay_seconds = float(data.get('delay_seconds', 1.0))
+    max_variations = int(data.get('max_variations', 5))
+    
+    success, message = start_learning(
+        minutes, topic, model_name, 
+        batch_size=batch_size, 
+        delay_seconds=delay_seconds,
+        max_variations=max_variations
+    )
     
     if success:
         return jsonify({"success": True, "message": message})

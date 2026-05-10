@@ -4,12 +4,12 @@ title Diana AI - Master Launcher
 color 0B
 
 echo.
-echo  ╔══════════════════════════════════════════════╗
-echo  ║         DIANA AI - MASTER LAUNCHER           ║
-echo  ╚══════════════════════════════════════════════╝
+echo  +==============================================+
+echo  ^|        DIANA AI - MASTER LAUNCHER            ^|
+echo  +==============================================+
 echo.
 
-:: Simpan lokasi awal
+:: Simpan lokasi folder ini
 set "ROOT_DIR=%~dp0"
 
 :: ============================================
@@ -18,22 +18,20 @@ set "ROOT_DIR=%~dp0"
 echo  [*] Memeriksa dependencies...
 echo.
 
-:: Cek Python
 python --version >nul 2>&1
 if errorlevel 1 (
     color 0C
-    echo  [ERROR] Python tidak ditemukan! Install Python terlebih dahulu.
+    echo  [ERROR] Python tidak ditemukan!
     echo  Download: https://www.python.org/downloads/
     pause
     exit /b 1
 )
 echo  [OK] Python ditemukan.
 
-:: Cek Node.js
 node --version >nul 2>&1
 if errorlevel 1 (
     color 0C
-    echo  [ERROR] Node.js tidak ditemukan! Install Node.js terlebih dahulu.
+    echo  [ERROR] Node.js tidak ditemukan!
     echo  Download: https://nodejs.org/
     pause
     exit /b 1
@@ -45,9 +43,9 @@ echo  [*] Menginstall Python dependencies...
 pip install -r "%ROOT_DIR%requirements.txt" --quiet 2>nul
 echo  [OK] Python dependencies siap.
 
-:: Install npm dependencies jika belum
+:: Install npm dependencies jika belum ada
 if not exist "%ROOT_DIR%frontend\node_modules\" (
-    echo  [*] Menginstall Frontend dependencies (pertama kali)...
+    echo  [*] Menginstall Frontend dependencies (pertama kali, harap tunggu)...
     cd /d "%ROOT_DIR%frontend"
     call npm install
     cd /d "%ROOT_DIR%"
@@ -56,17 +54,12 @@ echo  [OK] Frontend dependencies siap.
 echo.
 
 :: ============================================
-:: LANGKAH 2: MATIKAN PROSES LAMA (jika ada)
+:: LANGKAH 2: BERSIHKAN PROSES LAMA
 :: ============================================
-echo  [*] Membersihkan proses lama...
-:: Kill proses python di port 5050 jika ada
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5050" ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
-)
-:: Kill proses node di port 4321 jika ada  
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":4321" ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
-)
+echo  [*] Membersihkan proses lama di port 5050 dan 4321...
+powershell -NoProfile -Command ^
+  "Get-NetTCPConnection -LocalPort 5050 -State Listen -EA SilentlyContinue | %% { Stop-Process -Id $_.OwningProcess -Force -EA SilentlyContinue }; ^
+   Get-NetTCPConnection -LocalPort 4321 -State Listen -EA SilentlyContinue | %% { Stop-Process -Id $_.OwningProcess -Force -EA SilentlyContinue }" >nul 2>&1
 echo  [OK] Proses lama dibersihkan.
 echo.
 
@@ -74,23 +67,27 @@ echo.
 :: LANGKAH 3: JALANKAN BACKEND
 :: ============================================
 echo  [1/2] Menyalakan Otak Diana (Backend - Port 5050)...
-start "Diana AI - Backend" cmd /k "title Diana AI - Backend ^& color 0A ^& cd /d "%ROOT_DIR%backend" ^& echo. ^& echo  === BACKEND DIANA AI === ^& echo. ^& python app.py"
+start "Diana AI - Backend" cmd /c ""%ROOT_DIR%start_backend.bat""
 
-:: Tunggu backend siap
-echo  [*] Menunggu backend siap...
-timeout /t 4 /nobreak > nul
+echo  [*] Menunggu backend siap (12 detik)...
+timeout /t 12 /nobreak >nul
 
-:: Cek apakah backend benar-benar jalan
+:: Cek koneksi backend
 echo  [*] Mengecek koneksi backend...
-curl -s http://127.0.0.1:5050/status >nul 2>&1
+powershell -NoProfile -Command ^
+  "try { Invoke-WebRequest -Uri 'http://127.0.0.1:5050/status' -UseBasicParsing -TimeoutSec 5 | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+
 if errorlevel 1 (
-    echo  [!!] Backend belum merespon, menunggu 5 detik lagi...
-    timeout /t 5 /nobreak > nul
-    curl -s http://127.0.0.1:5050/status >nul 2>&1
+    echo  [!!] Backend belum merespon, menunggu 8 detik lagi...
+    timeout /t 8 /nobreak >nul
+    powershell -NoProfile -Command ^
+      "try { Invoke-WebRequest -Uri 'http://127.0.0.1:5050/status' -UseBasicParsing -TimeoutSec 5 | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
     if errorlevel 1 (
         color 0E
-        echo  [PERINGATAN] Backend mungkin belum siap. Cek jendela Backend.
+        echo  [PERINGATAN] Backend belum merespon!
+        echo  Cek jendela "Diana AI - Backend" untuk melihat error Python.
     ) else (
+        color 0B
         echo  [OK] Backend ONLINE di http://127.0.0.1:5050
     )
 ) else (
@@ -102,45 +99,44 @@ echo.
 :: LANGKAH 4: JALANKAN FRONTEND
 :: ============================================
 echo  [2/2] Menyalakan Antarmuka Diana (Frontend - Port 4321)...
-start "Diana AI - Frontend" cmd /k "title Diana AI - Frontend ^& color 0D ^& cd /d "%ROOT_DIR%frontend" ^& echo. ^& echo  === FRONTEND DIANA AI === ^& echo. ^& npm run dev"
+start "Diana AI - Frontend" cmd /c ""%ROOT_DIR%start_frontend.bat""
 
-:: Tunggu frontend siap
-echo  [*] Menunggu frontend siap...
-timeout /t 5 /nobreak > nul
+echo  [*] Menunggu frontend siap (10 detik)...
+timeout /t 10 /nobreak >nul
 
 echo.
-echo  ╔══════════════════════════════════════════════╗
-echo  ║            DIANA AI STATUS MONITOR            ║
-echo  ╠══════════════════════════════════════════════╣
-echo  ║                                              ║
-echo  ║  Backend  : http://127.0.0.1:5050            ║
-echo  ║  Frontend : http://localhost:4321             ║
-echo  ║                                              ║
-echo  ║  Buka browser ke: http://localhost:4321       ║
-echo  ║                                              ║
-echo  ╠══════════════════════════════════════════════╣
-echo  ║  Jendela ini HARUS TETAP TERBUKA             ║
-echo  ║  Tekan CTRL+C atau tutup untuk stop Diana    ║
-echo  ╚══════════════════════════════════════════════╝
+echo  +==============================================+
+echo  ^|           DIANA AI SUDAH AKTIF!              ^|
+echo  +----------------------------------------------+
+echo  ^|  Backend  : http://127.0.0.1:5050            ^|
+echo  ^|  Frontend : http://localhost:4321             ^|
+echo  ^|                                              ^|
+echo  ^|  >> Buka browser: http://localhost:4321 <<   ^|
+echo  +----------------------------------------------+
+echo  ^|  Jendela ini HARUS TETAP TERBUKA             ^|
+echo  ^|  Tekan CTRL+C untuk stop semua               ^|
+echo  +==============================================+
 echo.
+
+:: Buka browser otomatis
+start "" "http://localhost:4321"
 
 :: ============================================
-:: MONITORING LOOP - Jendela ini tetap terbuka
+:: MONITORING LOOP
 :: ============================================
 :monitor
 echo  [%TIME%] Mengecek status Diana...
 
-:: Cek Backend
-curl -s -o nul -w "" http://127.0.0.1:5050/status >nul 2>&1
+powershell -NoProfile -Command ^
+  "try { Invoke-WebRequest -Uri 'http://127.0.0.1:5050/status' -UseBasicParsing -TimeoutSec 5 | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+
 if errorlevel 1 (
     color 0C
-    echo  [%TIME%] [OFFLINE] Backend TIDAK MERESPON!
-    echo             Cek jendela "Diana AI - Backend" untuk error.
+    echo  [%TIME%] [OFFLINE] Backend tidak merespon! Cek jendela "Diana AI - Backend".
 ) else (
     color 0B
-    echo  [%TIME%] [ONLINE]  Backend OK - Frontend: http://localhost:4321
+    echo  [%TIME%] [ONLINE]  Diana aktif - http://localhost:4321
 )
 
-:: Tunggu 15 detik sebelum cek lagi
-timeout /t 15 /nobreak > nul
+timeout /t 20 /nobreak >nul
 goto monitor

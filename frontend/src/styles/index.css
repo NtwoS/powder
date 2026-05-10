@@ -337,6 +337,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    width: 100%;
 }
 
 .admin-header h2 { font-size: 1.3rem; margin-bottom: 6px; }
@@ -474,7 +475,9 @@ td {
     display: flex;
     flex-direction: column;
     gap: 30px;
+    width: 100%;
 }
+
 
 #view-settings, #view-skills {
     overflow-y: auto;
