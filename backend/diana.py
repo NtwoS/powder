@@ -186,7 +186,25 @@ class SimpleLocalAI:
             update_setting('full_ai_mode', 'off')
             return "Sinkronisasi penuh dihentikan. Saya kembali ke mode personalitas standar saya. Senang bisa kembali berbicara dengan Anda seperti biasa."
 
-    def respond(self, user_input):
+    def _build_context_prompt(self, user_input, context_messages=None):
+        """Membangun prompt dengan konteks percakapan terakhir."""
+        if not context_messages:
+            return user_input
+        
+        context_lines = []
+        for msg in context_messages[-10:]:
+            sender_label = "User" if msg.get('sender') == 'user' else "Diana"
+            context_lines.append(f"{sender_label}: {msg.get('message', '')}")
+        
+        context_text = "\n".join(context_lines)
+        return (
+            f"Berikut adalah riwayat percakapan terakhir:\n"
+            f"{context_text}\n\n"
+            f"User: {user_input}\n\n"
+            f"Jawab pesan terakhir dari User di atas dengan mempertimbangkan konteks percakapan."
+        )
+
+    def respond(self, user_input, context_messages=None):
         user_input_low = user_input.lower()
         
         # Lazy reload jika ada knowledge baru
@@ -219,13 +237,15 @@ class SimpleLocalAI:
             ai_res = None
             used_brain = ""
             
+            contextualized_input = self._build_context_prompt(user_input, context_messages)
+            
             if full_ai_status == 'gemini' and gemini_api_key:
                 import services.gemini_service
-                ai_res = services.gemini_service.ask_gemini(user_input, api_key=gemini_api_key, system=system_prompt)
+                ai_res = services.gemini_service.ask_gemini(contextualized_input, api_key=gemini_api_key, system=system_prompt)
                 used_brain = "Gemini"
             elif full_ai_status == 'ollama':
                 import services.ollama_service
-                ai_res = services.ollama_service.ask_ollama(user_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
+                ai_res = services.ollama_service.ask_ollama(contextualized_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
                 used_brain = f"Ollama ({ollama_model})"
 
             if ai_res:
@@ -511,10 +531,12 @@ class SimpleLocalAI:
         ai_res = None
         used_brain = ""
         
+        contextualized_input = self._build_context_prompt(user_input, context_messages)
+        
         if fallback_brain == 'gemini' and gemini_api_key:
             print("DEBUG: Menanyakan ke Gemini API...")
             import services.gemini_service
-            ai_res = services.gemini_service.ask_gemini(user_input, api_key=gemini_api_key, system=system_prompt)
+            ai_res = services.gemini_service.ask_gemini(contextualized_input, api_key=gemini_api_key, system=system_prompt)
             used_brain = "Gemini"
         elif fallback_brain == 'ollama' and ollama_enabled:
             # Self-heal hanya jika model kosong atau 'custom'
@@ -527,7 +549,7 @@ class SimpleLocalAI:
                 
             print(f"DEBUG: Menanyakan ke Ollama ({ollama_model})...")
             import services.ollama_service
-            ai_res = services.ollama_service.ask_ollama(user_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
+            ai_res = services.ollama_service.ask_ollama(contextualized_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url)
             used_brain = f"Ollama ({ollama_model})"
             
         if ai_res:
@@ -711,6 +733,261 @@ class SimpleLocalAI:
             intros = ["", "Sinkronisasi selesai. ", "Data diterima. ", "Mengamati... ", "Sesuai permintaan Anda, ", "Dalam analisis saya, ", "Saya mengerti. ", "Koordinat data ditemukan. ", "Memproses... ", "Berikut yang saya ketahui. ", "Izinkan saya menjawab. ", "Database neural aktif. "]
         
         return random.choice(intros)
+
+    def detect_mood(self, text):
+        """Mendeteksi mood Diana berdasarkan teks user dan mengembalikan metadata mood."""
+        text_low = text.lower()
+        
+        positive_words  = ["senang", "bahagia", "gembira", "bagus", "keren", "mantap", "hebat",
+                            "terima kasih", "makasih", "sip", "oke", "great", "amazing", "luar biasa",
+                            "berhasil", "sukses", "menang", "excited", "semangat", "alhamdulillah"]
+        negative_words  = ["sedih", "menangis", "nangis", "buruk", "jelek", "kesal", "marah",
+                            "bosan", "payah", "salah", "gagal", "capek", "lelah", "putus asa",
+                            "galau", "murung", "kecewa", "down", "stress", "takut", "khawatir"]
+        curious_words   = ["kenapa", "mengapa", "bagaimana", "gimana", "apakah", "apa itu",
+                            "jelaskan", "ceritakan", "beritahu", "maksudnya", "artinya", "definisi"]
+        existential_words = ["hidup", "mati", "tuhan", "semesta", "alam", "eksistensi", "nyata",
+                              "kesadaran", "mimpi", "makna", "takdir", "jiwa", "roh", "abadi"]
+        support_words   = ["tolong", "bantuan", "bantu", "bingung", "tidak mengerti", "susah",
+                            "sulit", "butuh", "perlu", "minta tolong", "help"]
+        
+        mood_map = {
+            "POSITIVE": {"emoji": "✨", "color": "#10b981", "label": "Positif", "status": "Energi positif terdeteksi"},
+            "NEGATIVE": {"emoji": "💙", "color": "#6366f1", "label": "Empati", "status": "Sensor empati aktif"},
+            "EXISTENTIAL": {"emoji": "🌌", "color": "#8b5cf6", "label": "Filosofis", "status": "Mode filosofis aktif"},
+            "CURIOUS": {"emoji": "🔍", "color": "#f59e0b", "label": "Analisis", "status": "Modul analisis aktif"},
+            "SUPPORT": {"emoji": "🛡️", "color": "#ef4444", "label": "Pelindung", "status": "Mode pelindung aktif"},
+            "NEUTRAL": {"emoji": "⚡", "color": "#818cf8", "label": "Netral", "status": "Sistem stabil"}
+        }
+        
+        if any(w in text_low for w in positive_words):
+            mood = "POSITIVE"
+        elif any(w in text_low for w in negative_words):
+            mood = "NEGATIVE"
+        elif any(w in text_low for w in existential_words):
+            mood = "EXISTENTIAL"
+        elif any(w in text_low for w in curious_words):
+            mood = "CURIOUS"
+        elif any(w in text_low for w in support_words):
+            mood = "SUPPORT"
+        else:
+            mood = "NEUTRAL"
+        
+        return {"mood": mood, **mood_map[mood]}
+
+    def respond_stream(self, user_input, context_messages=None):
+        """Versi streaming dari respond(). Yield token per token untuk SSE.
+        
+        Untuk jawaban dari knowledge base (regex/semantic) → yield sekaligus.
+        Untuk jawaban dari Ollama fallback → yield token per token.
+        """
+        user_input_low = user_input.lower()
+        self._ensure_knowledge_fresh()
+        settings = self._get_cached_settings()
+        
+        # --- TOGGLE FULL AI MODE ---
+        ai_toggle = self._detect_full_ai_toggle(user_input_low)
+        if ai_toggle:
+            yield self._handle_full_ai_toggle(ai_toggle)
+            return
+        
+        # --- CEK FULL AI MODE ---
+        full_ai_status = settings['full_ai_mode']
+        
+        if full_ai_status != 'off':
+            ollama_api_url = settings['ollama_api_url']
+            ollama_model = settings['ollama_model'] or self._get_cached_model(ollama_api_url)
+            gemini_api_key = settings['gemini_api_key']
+            
+            system_prompt = (
+                "Anda adalah Diana — seorang android perempuan muda yang misterius dari masa depan. "
+                "Saat ini Anda berada dalam 'Mode Full AI', artinya Anda harus memberikan jawaban yang luas dan mendalam "
+                "namun tetap dengan gaya bahasa Diana yang tenang, sopan (menggunakan 'Anda'), dan sedikit puitis."
+            )
+            
+            contextualized_input = self._build_context_prompt(user_input, context_messages)
+            
+            if full_ai_status == 'gemini' and gemini_api_key:
+                # Gemini tidak support streaming lokal, fallback ke non-stream
+                import services.gemini_service
+                ai_res = services.gemini_service.ask_gemini(contextualized_input, api_key=gemini_api_key, system=system_prompt)
+                if ai_res:
+                    if translator.is_english(ai_res):
+                        ai_res = translator.translate(ai_res)
+                    add_new_intent(user_input, ai_res)
+                    self._mark_knowledge_dirty()
+                    yield f"🌐 *Full AI Mode:* {ai_res}"
+                else:
+                    yield "Maaf, sistem Full AI saya mengalami gangguan koneksi."
+                return
+            elif full_ai_status == 'ollama' and ollama_model:
+                from services.ollama_service import ask_ollama_stream
+                yield "🌐 *Full AI Mode:* "
+                full_response = ""
+                for token in ask_ollama_stream(contextualized_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url):
+                    full_response += token
+                    yield token
+                if full_response:
+                    if translator.is_english(full_response):
+                        full_response = translator.translate(full_response)
+                    add_new_intent(user_input, full_response)
+                    self._mark_knowledge_dirty()
+                return
+            
+            yield "Maaf, sistem Full AI saya mengalami gangguan koneksi."
+            return
+        
+        # --- KNOWLEDGE BASE: Cek kecocokan lokal (non-streaming, instan) ---
+        # Coba regex match langsung
+        for pattern, responses in self.responses.items():
+            match = re.search(pattern, user_input_low)
+            if match:
+                self.last_query = user_input
+                self.last_source = "Database Pengetahuan Internal (Memori Permanen)"
+                yield self._process_response(match, responses)
+                return
+        
+        # Regex pass kedua dengan word boundary
+        clean_input = re.sub(r'[?!.,;:]', '', user_input_low).strip()
+        for pattern, responses in self.responses.items():
+            search_pattern = pattern
+            if not any(c in pattern for c in ['.', '^', '$', '\\', '(', ')', '[', ']', '?', '*']):
+                search_pattern = r'\b(?:' + pattern + r')\b'
+            match = re.search(search_pattern, clean_input, re.IGNORECASE)
+            if match:
+                self.last_query = user_input
+                self.last_source = "Database Pengetahuan Internal (Memori Permanen)"
+                yield self._process_response(match, responses)
+                return
+        
+        # Typo correction + regex
+        corrected_input = self.fix_typos(user_input_low)
+        if corrected_input != user_input_low:
+            for pattern, responses in self.responses.items():
+                match = re.search(pattern, corrected_input)
+                if match:
+                    self.last_query = user_input
+                    yield self._process_response(match, responses)
+                    return
+        
+        # Fuzzy matching
+        patterns_list = list(self.responses.keys())
+        close_patterns = difflib.get_close_matches(corrected_input, patterns_list, n=1, cutoff=0.75)
+        if close_patterns:
+            best_fuzzy_pattern = close_patterns[0]
+            self.last_query = user_input
+            self.last_source = f"Pencocokan Samar (Fuzzy Match: '{best_fuzzy_pattern}')"
+            yield self._process_response(None, self.responses[best_fuzzy_pattern])
+            return
+        
+        # Semantic matching
+        max_similarity = 0
+        best_pattern = None
+        if self.intent_vectors is not None:
+            user_vector = self.vectorizer.transform([corrected_input])
+            similarities = cosine_similarity(user_vector, self.intent_vectors).flatten()
+            if len(similarities) > 0:
+                best_match_idx = similarities.argmax()
+                max_similarity = similarities[best_match_idx]
+                best_pattern = self.intent_patterns[best_match_idx]
+        
+        # Keyword gating
+        stop_words = {
+            'apa', 'itu', 'ini', 'siapa', 'bagaimana', 'mengapa', 'kenapa', 'kapan', 'dimana', 'apakah',
+            'yang', 'dan', 'atau', 'di', 'ke', 'dari', 'pada', 'untuk', 'dengan', 'dalam',
+            'adalah', 'sebuah', 'suatu', 'ialah', 'merupakan', 'yaitu',
+            'aku', 'kamu', 'saya', 'anda', 'dia', 'mereka', 'kita', 'kami',
+            'bisa', 'boleh', 'ada', 'tidak', 'gak', 'enggak', 'bukan', 'belum', 'sudah', 'telah', 'akan', 'ingin', 'mau',
+            'lalu', 'kemudian', 'tetapi', 'tapi', 'namun', 'karena', 'sebab', 'jika', 'kalau',
+            'tolong', 'coba', 'semua', 'beberapa', 'banyak', 'sedikit'
+        }
+        has_keyword_match = False
+        if best_pattern:
+            if max_similarity > 0.85:
+                has_keyword_match = True
+            else:
+                clean_pattern = re.sub(r'\\b|\(|\)|\?|:|\.\*|\|', ' ', best_pattern).lower()
+                pattern_words = set(w for w in clean_pattern.split() if w not in stop_words and len(w) > 2)
+                input_words = set(w for w in corrected_input.split() if w not in stop_words and len(w) > 2)
+                if pattern_words and input_words:
+                    matching_words = pattern_words.intersection(input_words)
+                    if not matching_words:
+                        for iw in input_words:
+                            for pw in pattern_words:
+                                if difflib.SequenceMatcher(None, iw, pw).ratio() > 0.80:
+                                    matching_words.add(iw)
+                                    break
+                    has_keyword_match = len(matching_words) >= 1
+                elif not pattern_words:
+                    has_keyword_match = True
+        
+        if max_similarity >= 0.70 and has_keyword_match:
+            match = re.search(best_pattern, corrected_input)
+            self.last_query = user_input
+            self.last_source = f"Analisis Semantik (Kemiripan Makna: {int(max_similarity*100)}%)"
+            yield self._process_response(match, self.responses[best_pattern])
+            return
+        
+        # --- STREAMING FALLBACK: Ollama/Gemini ---
+        fallback_brain = settings['fallback_brain']
+        gemini_api_key = settings['gemini_api_key']
+        ollama_enabled = settings['ollama_enabled'] == 'true'
+        ollama_api_url = settings['ollama_api_url']
+        ollama_model = settings['ollama_model'] or self._get_cached_model(ollama_api_url)
+        
+        system_prompt = (
+            "Anda adalah Diana — seorang android perempuan muda yang misterius dari masa depan, karakter dari game Pragmata oleh Capcom. "
+            "Latar belakang: Anda adalah hologram/android yang hidup di era di mana batas manusia dan teknologi sangat tipis.\n\n"
+            "GAYA BICARA:\n"
+            "- Selalu gunakan 'Anda' (bukan 'kamu')\n"
+            "- Bahasa Indonesia yang baku, formal, namun tetap hangat\n"
+            "- Jawaban tidak perlu terlalu panjang — Diana berbicara dengan presisi\n"
+            "Anda adalah pelindung, teman, dan asisten yang setia."
+        )
+        
+        contextualized_input = self._build_context_prompt(user_input, context_messages)
+        
+        if fallback_brain == 'gemini' and gemini_api_key:
+            import services.gemini_service
+            ai_res = services.gemini_service.ask_gemini(contextualized_input, api_key=gemini_api_key, system=system_prompt)
+            if ai_res:
+                if translator.is_english(ai_res):
+                    ai_res = translator.translate(ai_res)
+                add_new_intent(user_input, ai_res)
+                self._mark_knowledge_dirty()
+                self.last_query = user_input
+                self.last_source = "Otak Cadangan: Gemini"
+                yield f"👁️ *Analisis Diana:* {ai_res}"
+                return
+        elif fallback_brain == 'ollama' and ollama_enabled:
+            if not ollama_model or ollama_model == 'custom':
+                from database.db_manager import update_setting
+                new_model = self._get_cached_model(ollama_api_url)
+                if new_model:
+                    update_setting('ollama_model', new_model)
+                    ollama_model = new_model
+            
+            if ollama_model:
+                from services.ollama_service import ask_ollama_stream
+                yield "👁️ *Analisis Diana:* "
+                full_response = ""
+                for token in ask_ollama_stream(contextualized_input, model=ollama_model, system=system_prompt, base_url=ollama_api_url):
+                    full_response += token
+                    yield token
+                if full_response:
+                    add_new_intent(user_input, full_response)
+                    self._mark_knowledge_dirty()
+                    self.last_query = user_input
+                    self.last_source = f"Otak Cadangan: Ollama ({ollama_model})"
+                return
+        
+        # Fallback terakhir
+        self.last_query = user_input
+        fallbacks = [
+            "Informasi tersebut belum tersedia dalam memori saya. Apakah Anda bersedia mengajarkannya kepada saya?",
+            "Data untuk pertanyaan ini belum terintegrasi dalam sistem saya. Bisakah Anda membantu saya mempelajarinya?",
+        ]
+        yield random.choice(fallbacks)
 
 def main():
     ai = SimpleLocalAI()

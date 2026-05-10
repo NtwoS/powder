@@ -14,6 +14,94 @@
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 		<link rel="stylesheet" href="/src/styles/index.css" />
 		<style>
+			/* Typing Indicator */
+			.typing-indicator {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				padding: 4px 0;
+			}
+			.typing-indicator span {
+				width: 7px;
+				height: 7px;
+				background: #818cf8;
+				border-radius: 50%;
+				display: inline-block;
+				animation: typingBounce 1.4s infinite ease-in-out;
+			}
+			.typing-indicator span:nth-child(1) { animation-delay: 0s; }
+			.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+			.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+			@keyframes typingBounce {
+				0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+				40% { transform: scale(1); opacity: 1; }
+			}
+
+			/* Markdown in Chat */
+			.message.bot pre {
+				background: rgba(0, 0, 0, 0.4);
+				border: 1px solid rgba(129, 140, 248, 0.15);
+				border-radius: 8px;
+				padding: 12px 16px;
+				overflow-x: auto;
+				margin: 8px 0;
+				font-size: 0.88em;
+			}
+			.message.bot pre code {
+				background: none !important;
+				padding: 0 !important;
+				color: #a5b4fc;
+			}
+			.message.bot strong {
+				color: #c7d2fe;
+			}
+			.message.bot em {
+				color: #a5b4fc;
+				font-style: italic;
+			}
+			.message.bot a {
+				color: #818cf8;
+				text-decoration: underline;
+			}
+			.message.bot a:hover {
+				color: #a5b4fc;
+			}
+
+			/* Mood Indicator */
+			#diana-mood-bar {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 6px 16px;
+				background: rgba(10, 10, 10, 0.6);
+				border-top: 1px solid rgba(255, 255, 255, 0.04);
+				font-size: 0.78rem;
+				color: #666;
+				transition: all 0.5s ease;
+				min-height: 28px;
+			}
+			#diana-mood-bar .mood-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #818cf8;
+				box-shadow: 0 0 8px currentColor;
+				transition: all 0.5s ease;
+				animation: moodPulse 2s ease-in-out infinite;
+			}
+			#diana-mood-bar .mood-label {
+				font-weight: 600;
+				transition: color 0.5s ease;
+			}
+			#diana-mood-bar .mood-status {
+				opacity: 0.7;
+				font-style: italic;
+			}
+			@keyframes moodPulse {
+				0%, 100% { opacity: 1; transform: scale(1); }
+				50% { opacity: 0.5; transform: scale(0.8); }
+			}
+
 			/* Toast Notifications */
 			#toast-container {
 				position: fixed;
@@ -329,6 +417,12 @@
 					<!-- Messages will appear here -->
 				</div>
 
+				<div id="diana-mood-bar">
+					<span class="mood-dot" id="mood-dot"></span>
+					<span class="mood-label" id="mood-emoji">⚡</span>
+					<span class="mood-label" id="mood-label" style="color: #818cf8;">Netral</span>
+					<span class="mood-status" id="mood-status">— Sistem stabil</span>
+				</div>
 				<footer class="chat-footer">
 					<form id="chat-form">
 						<input type="file" id="file-analyzer" accept=".txt,.pdf" style="display: none;" />
@@ -366,13 +460,21 @@
 							<input type="text" id="admin-search" placeholder="Cari pengetahuan..." />
 						</div>
 						<input type="file" id="csv-upload" accept=".csv" style="display: none;" />
-						<div style="display: flex; gap: 10px; align-items: center;">
+						<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 							<button class="btn-save" id="btn-bulk-delete" style="display: none; background: #ef4444; padding: 8px 15px; font-size: 0.85rem; border-radius: 8px;">
 								Hapus Terpilih (<span id="selected-count">0</span>)
 							</button>
 							<button class="btn-secondary" id="btn-trigger-upload">
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
 								Impor CSV
+							</button>
+							<button class="btn-secondary" id="btn-export-json" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #10b981;">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+								Ekspor JSON
+							</button>
+							<button class="btn-secondary" id="btn-export-csv" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #10b981;">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+								Ekspor CSV
 							</button>
 						</div>
 					</div>
@@ -1578,6 +1680,14 @@
 			});
 
 
+			// Export Knowledge Buttons
+			document.getElementById('btn-export-json').addEventListener('click', () => {
+				window.open('http://127.0.0.1:5050/intents/export/json', '_blank');
+			});
+			document.getElementById('btn-export-csv').addEventListener('click', () => {
+				window.open('http://127.0.0.1:5050/intents/export/csv', '_blank');
+			});
+
 			// Check connection & get profile
 			async function checkStatus() {
 				try {
@@ -1767,13 +1877,64 @@
 				}
 			});
 
+			// === MARKDOWN RENDERER ===
+			function renderMarkdown(text) {
+				if (!text) return '';
+				let html = text;
+				// Escape HTML first to prevent XSS
+				html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				// Code blocks (```...```)
+				html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+				// Inline code (`...`)
+				html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(129,140,248,0.15);padding:2px 6px;border-radius:4px;font-size:0.9em;">$1</code>');
+				// Bold (**...** or __...__)
+				html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+				html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+				// Italic (*...* or _..._)
+				html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+				// Links [text](url)
+				html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#818cf8;text-decoration:underline;">$1</a>');
+				// Headers (### ... , ## ..., # ...)
+				html = html.replace(/^### (.+)$/gm, '<strong style="font-size:1.05em;color:#a5b4fc;">$1</strong>');
+				html = html.replace(/^## (.+)$/gm, '<strong style="font-size:1.1em;color:#a5b4fc;">$1</strong>');
+				html = html.replace(/^# (.+)$/gm, '<strong style="font-size:1.15em;color:#a5b4fc;">$1</strong>');
+				// Bullet lists (- item or * item)
+				html = html.replace(/^[\-\*] (.+)$/gm, '&bull; $1');
+				// Numbered lists (1. item)
+				html = html.replace(/^(\d+)\. (.+)$/gm, '<strong>$1.</strong> $2');
+				// Horizontal rule (---)
+				html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:8px 0;">');
+				// Line breaks
+				html = html.replace(/\n/g, '<br>');
+				return html;
+			}
+
 			function addMessage(text, sender) {
 				document.getElementById('empty-state').style.display = 'none';
 				const div = document.createElement('div');
 				div.className = `message ${sender}`;
-				div.innerHTML = `<p>${text}</p>`;
+				// Render markdown untuk pesan bot, plain text untuk user
+				if (sender === 'bot' || sender === 'system') {
+					div.innerHTML = `<p>${renderMarkdown(text)}</p>`;
+				} else {
+					const p = document.createElement('p');
+					p.textContent = text;
+					div.appendChild(p);
+				}
 				container.appendChild(div);
 				container.scrollTop = container.scrollHeight;
+				return div;
+			}
+
+			function addTypingIndicator() {
+				document.getElementById('empty-state').style.display = 'none';
+				const div = document.createElement('div');
+				div.className = 'message bot';
+				div.id = 'typing-bubble';
+				div.innerHTML = `<p><span class="typing-indicator"><span></span><span></span><span></span></span></p>`;
+				container.appendChild(div);
+				container.scrollTop = container.scrollHeight;
+				return div;
 			}
 
 			form.addEventListener('submit', async (e) => {
@@ -1792,25 +1953,90 @@
 			});
 
 			async function handleNormalChat(msg) {
+				// Tampilkan typing indicator
+				const typingBubble = addTypingIndicator();
+				
 				try {
-					const res = await fetch('http://127.0.0.1:5050/chat', {
+					const res = await fetch('http://127.0.0.1:5050/chat/stream', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ message: msg, conversation_id: currentConversationId })
 					});
-					const data = await res.json();
-					addMessage(data.response, 'bot');
 					
-					// Simpan conversation_id dari response (untuk pesan pertama yang auto-create)
-					if (data.conversation_id && !currentConversationId) {
-						currentConversationId = data.conversation_id;
-						loadHistory(); // Refresh sidebar untuk tampilkan conversation baru
+					if (!res.ok) {
+						typingBubble.remove();
+						addMessage('Gagal terhubung ke backend.', 'bot');
+						return;
 					}
 					
-					if (data.user_name) {
-						userNameDisplay.textContent = data.user_name;
+					// Ganti typing indicator dengan bubble kosong untuk streaming
+					let firstToken = true;
+					let streamText = '';
+					
+					const reader = res.body.getReader();
+					const decoder = new TextDecoder();
+					let buffer = '';
+					
+					while (true) {
+						const { done, value } = await reader.read();
+						if (done) break;
+						
+						buffer += decoder.decode(value, { stream: true });
+						const lines = buffer.split('\n');
+						buffer = lines.pop(); // Simpan sisa yang belum lengkap
+						
+						for (const line of lines) {
+							if (!line.startsWith('data: ')) continue;
+							
+							try {
+								const data = JSON.parse(line.substring(6));
+								
+								// Tangkap conversation_id
+								if (data.conversation_id && !currentConversationId) {
+									currentConversationId = data.conversation_id;
+									loadHistory();
+								}
+								
+								if (data.done) break;
+								
+								// Update mood indicator
+								if (data.mood) {
+									const m = data.mood;
+									document.getElementById('mood-dot').style.background = m.color;
+									document.getElementById('mood-dot').style.color = m.color;
+									document.getElementById('mood-emoji').textContent = m.emoji;
+									document.getElementById('mood-label').textContent = m.label;
+									document.getElementById('mood-label').style.color = m.color;
+									document.getElementById('mood-status').textContent = '— ' + m.status;
+								}
+
+								if (data.token) {
+									if (firstToken) {
+										// Ganti typing indicator dengan teks
+										typingBubble.innerHTML = '<p></p>';
+										firstToken = false;
+									}
+									streamText += data.token;
+									typingBubble.querySelector('p').textContent = streamText;
+									container.scrollTop = container.scrollHeight;
+								}
+							} catch (parseErr) {
+								// Skip baris yang tidak bisa di-parse
+							}
+						}
 					}
+					
+					// Jika tidak ada token sama sekali (typing masih tampil)
+					if (firstToken) {
+						typingBubble.remove();
+						addMessage('Diana tidak memberikan respons.', 'bot');
+					} else {
+						// Render markdown setelah streaming selesai
+						typingBubble.querySelector('p').innerHTML = renderMarkdown(streamText);
+					}
+					
 				} catch (err) {
+					typingBubble.remove();
 					addMessage('Gagal terhubung ke backend. Pastikan app.py sudah dijalankan.', 'bot');
 				}
 			}

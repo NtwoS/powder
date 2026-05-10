@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from diana import SimpleLocalAI
 import os
+import json as json_module
 
 app = Flask(__name__)
 CORS(app) # Mengizinkan Astro (frontend) mengakses API ini
@@ -103,6 +104,18 @@ init_db()
 # Inisialisasi AI
 ai = SimpleLocalAI()
 
+def _get_context_messages(conversation_id, limit=10):
+    """Mengambil pesan terakhir dari conversation untuk konteks."""
+    if not conversation_id:
+        return None
+    try:
+        messages = get_conversation_messages(conversation_id)
+        if messages and len(messages) > 0:
+            return messages[-limit:]
+    except Exception:
+        pass
+    return None
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
@@ -120,11 +133,14 @@ def chat():
     # Simpan pesan User ke DB
     save_chat_message("user", user_input, conversation_id)
     
-    # Mendapatkan respon dari AI
+    # Ambil konteks percakapan terakhir
+    context_messages = _get_context_messages(conversation_id)
+    
+    # Mendapatkan respon dari AI (dengan konteks)
     if hasattr(ai, 'base_url'):
         ai.base_url = get_setting('ollama_api_url', 'http://localhost:11434')
         
-    response = ai.respond(user_input)
+    response = ai.respond(user_input, context_messages=context_messages)
     
     # Simpan respon Bot ke DB
     save_chat_message("bot", response, conversation_id)
@@ -134,6 +150,59 @@ def chat():
         "user_name": ai.user_name,
         "bot_name": ai.name,
         "conversation_id": conversation_id
+    })
+
+@app.route('/chat/stream', methods=['POST'])
+def chat_stream():
+    """SSE endpoint untuk streaming respons Diana token per token."""
+    data = request.json
+    user_input = data.get('message', '')
+    conversation_id = data.get('conversation_id')
+    
+    if not user_input:
+        def error_gen():
+            yield f"data: {json_module.dumps({'token': 'Pesan kosong.', 'done': True})}\n\n"
+        return Response(error_gen(), mimetype='text/event-stream')
+    
+    # Auto-create conversation jika belum ada
+    if not conversation_id:
+        title = user_input[:40] + ('...' if len(user_input) > 40 else '')
+        conversation_id = create_conversation(title)
+    
+    # Simpan pesan User ke DB
+    save_chat_message("user", user_input, conversation_id)
+    
+    # Ambil konteks percakapan terakhir
+    context_messages = _get_context_messages(conversation_id)
+    
+    def generate():
+        # Deteksi mood Diana berdasarkan input user
+        mood_data = ai.detect_mood(user_input)
+        
+        # Kirim conversation_id dan mood di awal
+        yield f"data: {json_module.dumps({'conversation_id': conversation_id, 'mood': mood_data, 'token': '', 'done': False})}\n\n"
+        
+        full_response = ""
+        try:
+            for token in ai.respond_stream(user_input, context_messages=context_messages):
+                full_response += token
+                yield f"data: {json_module.dumps({'token': token, 'done': False})}\n\n"
+        except Exception as e:
+            error_msg = f"[Error] {str(e)}"
+            full_response += error_msg
+            yield f"data: {json_module.dumps({'token': error_msg, 'done': False})}\n\n"
+        
+        # Simpan respons lengkap ke DB
+        if full_response:
+            save_chat_message("bot", full_response, conversation_id)
+        
+        # Sinyal selesai
+        yield f"data: {json_module.dumps({'token': '', 'done': True, 'conversation_id': conversation_id})}\n\n"
+    
+    return Response(generate(), mimetype='text/event-stream', headers={
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+        'Connection': 'keep-alive'
     })
 
 # --- ADMIN PANEL ENDPOINTS ---
@@ -150,6 +219,42 @@ def get_intents():
             "responses": responses
         })
     return jsonify({"intents": formatted_data})
+
+@app.route('/intents/export/json', methods=['GET'])
+def export_intents_json():
+    """Mengekspor semua pengetahuan Diana sebagai file JSON."""
+    data = get_all_intents()
+    export_data = []
+    for pattern, responses in data.items():
+        export_data.append({"pattern": pattern, "responses": responses})
+    
+    json_str = json_module.dumps(export_data, ensure_ascii=False, indent=2)
+    return Response(
+        json_str,
+        mimetype='application/json',
+        headers={'Content-Disposition': 'attachment; filename=diana_knowledge_backup.json'}
+    )
+
+@app.route('/intents/export/csv', methods=['GET'])
+def export_intents_csv():
+    """Mengekspor semua pengetahuan Diana sebagai file CSV."""
+    import csv
+    import io
+    
+    data = get_all_intents()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    for pattern, responses in data.items():
+        row = [pattern] + responses
+        writer.writerow(row)
+    
+    csv_str = output.getvalue()
+    return Response(
+        csv_str,
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=diana_knowledge_backup.csv'}
+    )
 
 @app.route('/intents/delete', methods=['POST'])
 def delete_intent():

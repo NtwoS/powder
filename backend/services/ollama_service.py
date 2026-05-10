@@ -92,7 +92,7 @@ def ask_ollama(prompt, model=None, system=None, options=None, base_url="http://l
         payload["options"] = options
 
     try:
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=payload, timeout=600)
         if response.status_code == 200:
             data = response.json()
             return data.get("response", "").strip()
@@ -105,6 +105,53 @@ def ask_ollama(prompt, model=None, system=None, options=None, base_url="http://l
     except Exception as e:
         print(f"Ollama Error: {e}")
         return None
+
+
+def ask_ollama_stream(prompt, model=None, system=None, options=None, base_url="http://localhost:11434"):
+    """
+    Mengirim prompt ke API Ollama lokal dengan streaming.
+    Menghasilkan (yield) setiap token/potongan teks satu per satu.
+    """
+    if not model:
+        model = get_first_available_model(base_url)
+    
+    if not model:
+        yield "[Error] Tidak ada model Ollama yang tersedia."
+        return
+
+    url = f"{base_url}/api/generate"
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": True
+    }
+    
+    if system:
+        payload["system"] = system
+    
+    if options:
+        payload["options"] = options
+
+    try:
+        response = requests.post(url, json=payload, timeout=600, stream=True)
+        if response.status_code == 200:
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        token = data.get("response", "")
+                        if token:
+                            yield token
+                        if data.get("done", False):
+                            break
+                    except json.JSONDecodeError:
+                        continue
+        else:
+            yield f"[Error] Ollama: {response.status_code}"
+    except requests.exceptions.ConnectionError:
+        yield "[Error] Tidak dapat terhubung ke Ollama."
+    except Exception as e:
+        yield f"[Error] {e}"
 
 
 if __name__ == "__main__":
